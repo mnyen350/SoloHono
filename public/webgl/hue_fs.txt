@@ -1,0 +1,14 @@
+precision mediump float;
+uniform sampler2D u_image;
+uniform float u_hue;
+varying vec2 v_texCoord;
+void main() {
+        vec4 color = texture2D(u_image, v_texCoord);
+        float angle = u_hue * 3.14159265 / 180.0;
+        float cosA = cos(angle);
+        float sinA = sin(angle);
+        mat3 hueRotation = mat3(0.299, 0.587, 0.114, 0.299, 0.587, 0.114, 0.299, 0.587, 0.114) +
+                mat3(0.701, -0.587, -0.114, -0.299, 0.413, -0.114, -0.3, -0.588, 0.886) * cosA +
+                mat3(0.168, 0.330, -0.497, -0.328, 0.035, 0.292, 1.25, -1.05, -0.203) * sinA;
+        gl_FragColor = vec4((hueRotation * color.rgb), color.a);
+}
