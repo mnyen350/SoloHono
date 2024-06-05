@@ -1,31 +1,26 @@
 class AssetManager {
-    // images
-    _floor;
-    _wall;
-    _player;
-    _path;
-    _blackspace;
+    _images;
+    _sounds;
 
-    get floor() { return this._floor; }
-    get wall() { return this._wall; }
-    get player() { return this._player; }
-    get path() { return this._path; }
-    get blackspace() { return this._blackspace; }
+    get images() { return this._images; }
+    get sounds() { return this._sounds; }
 
     constructor() {}
 
     async load(graphics) {
         console.log('Loading assets...');
 
-        this._floor = await this._loadImage('assets/floor.png');
-        this._wall = await this._loadImage('assets/wall.png');
-        this._path = await this._loadImage('assets/path.png');
-        this._blackspace = await this._loadImage('assets/blackspace.png');
+        this._images = {
+            floor: await this._loadImage('/assets/floor.png'),
+            wall: await this._loadImage('/assets/wall.png'),
+            path: await this._loadImage('/assets/path.png'),
+            blackspace: await this._loadImage('/assets/blackspace.png'),
+            player: await this._loadImage('/assets/player.png')
+        };
 
-        // test out altering hue
-        let player = await this._loadImage('assets/player.png');
-        player = await graphics.changeImageHue(player, 45);
-        this._player = player;
+        this._sounds = {
+            test: new Audio('/assets/test.wav')
+        };
 
         console.log('All assets loaded!');
     }

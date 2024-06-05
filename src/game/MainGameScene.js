@@ -21,54 +21,52 @@ export default class MainGameScene extends Scene {
 
     handleKeyDownEvent(e) {
         const key = e.key;
-        if (key == 'ArrowLeft') { // left
+        if (key === 'ArrowLeft') { // left
             this._playerLocation[0]--;
             return true;
-        } else if (key == 'ArrowRight') { // right
+        } else if (key === 'ArrowRight') { // right
             this._playerLocation[0]++;
             return true;
-        } else if (key == 'ArrowDown') { // down 
+        } else if (key === 'ArrowDown') { // down 
             this._playerLocation[1]++;
+            this.assets.sounds.test.play();
             return true;
-        } else if (key == 'ArrowUp') { // up
+        } else if (key === 'ArrowUp') { // up
             this._playerLocation[1]--;
             return true;
         }
         return false;
     }
 
-    drawAssetAt(asset, x, y) {
+    _drawAssetAt(asset, x, y) {
         this.graphics.drawImage(asset, x * GameGraphics.TileSize, y * GameGraphics.TileSize, asset.width, asset.height);
     }
 
-    draw() {
+    _drawFromLevelDesign(x, y) {
         const tileCharacterMap = {
-            '|': this.assets.wall,
-            '-': this.assets.wall,
-            '.': this.assets.floor,
-            '#': this.assets.path,
-            '+': this.assets.path,
-            ' ': this.assets.blackspace
+            '|': this.assets.images.wall,
+            '-': this.assets.images.wall,
+            '.': this.assets.images.floor,
+            '#': this.assets.images.path,
+            '+': this.assets.images.path,
+            ' ': this.assets.images.blackspace
         };
 
-        const start = new Date().getTime();
+        let ch = this._levelDesign[y][x];
+        let asset = tileCharacterMap[ch];
 
-        for (let y = 0; y < this._levelDesign.length; y++) {
-            let line = this._levelDesign[y];
-            for (let x = 0; x < line.length; x++) {
-                let ch = line[x];
-                let asset = tileCharacterMap[ch];
+        if (!asset) // this should never happen
+            asset = this.assets.images.floor;
 
-                if (!asset) // this should never happen
-                    asset = this.assets.floor;
+        this._drawAssetAt(asset, x, y);
+    }
 
-                this.drawAssetAt(asset, x, y);
-            }
-        }
+    draw() {
+        for (let y = 0; y < this._levelDesign.length; y++)
+            for (let x = 0; x < this._levelDesign[0].length; x++)
+                this._drawFromLevelDesign(x, y);
 
         const [px, py] = this._playerLocation;
-        this.drawAssetAt(this.assets.player, px, py);
-
-        console.log('drawing time: ', new Date().getTime() - start);
+        this._drawAssetAt(this.assets.images.player, px, py);
     }
 }
