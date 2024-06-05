@@ -129,12 +129,18 @@ class GameGraphics {
         return result;
     }
 
-    texturize(gl, tex) {
+    texturize(gl, image) {
         //
         // Convert Image to WebGL Texture if needed
         //
-        if (tex instanceof Image) {
-            const image = tex;
+        if (!gl.__textureCache)
+            gl.__textureCache = {};
+
+        if (image instanceof Image) {
+            // does this image already exist in the cache?
+            if (image.src && gl.__textureCache && gl.__textureCache[image.src])
+                return gl.__textureCache[image.src];
+
             const texture = gl.createTexture();
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -142,12 +148,19 @@ class GameGraphics {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            tex = texture;
+
+            // update the cache with this texture for the given image
+            if (image.src)
+                gl.__textureCache[image.src] = texture;
+
+            return texture;
         }
-        return tex;
+
+        // already a texture?
+        return image;
     }
 
-    drawImage(tex, dstX, dstY, texWidth, texHeight) {
+    drawImage(image, dstX, dstY, texWidth, texHeight) {
         const m4 = this.m4;
         const gl = this.gl;
         const program = this._program;
@@ -156,8 +169,8 @@ class GameGraphics {
         // https://webglfundamentals.org/webgl/lessons/webgl-2d-drawimage.html
         //
 
-        // if tex is an Image, then turn it into a gl texture
-        tex = this.texturize(gl, tex);
+        // turn it into a gl texture
+        const tex = this.texturize(gl, image);
 
         gl.bindTexture(gl.TEXTURE_2D, tex);
 
