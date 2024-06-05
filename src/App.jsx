@@ -8,7 +8,7 @@ function App() {
 
     if (!window.__GAME__) {
       console.log('Starting game!');
-      const game = window.__GAME__ = new Game();
+      const game = window.__GAME__ = new Game(79, 35);
 
       (async function () {
         await game.start();
@@ -19,7 +19,7 @@ function App() {
 
   return (
     <div className="App">
-      <canvas id="myCanvas" width="400" height="400">
+      <canvas id="myCanvas" style={{"border": "1px solid black"}}>
       </canvas>
     </div>
   );

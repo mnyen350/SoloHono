@@ -1,4 +1,8 @@
 class GameGraphics {
+
+    // tiles will be 16x16
+    static get TileSize() { return 16; }
+
     _canvas;
     _gl;
     _program;
@@ -8,8 +12,13 @@ class GameGraphics {
     get height() { return this._canvas.height; }
     get m4() { return window.m4; } // from webgl script
 
-    constructor() {
+    constructor(width, height) {
         const canvas = document.getElementById("myCanvas");
+        canvas.width = GameGraphics.TileSize * width;
+        canvas.height = GameGraphics.TileSize * height;
+
+        //console.log('Set canvas dimensions to ' + canvas.width + ' ' + canvas.height);
+
         this._canvas = canvas;
         this._gl = canvas.getContext("webgl");
     }

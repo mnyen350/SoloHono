@@ -5,13 +5,20 @@ class Game {
     _graphics;
     _assetManager;
     _playerLocation;
+    _width;
+    _height;
+    _levelDesign;
 
     get graphics() { return this._graphics; }
     get assetManager() { return this._assetManager; }
+    get width() { return this._width; }
+    get height() { return this._height; }
 
-    constructor() {
-        this._graphics = new GameGraphics();
+    constructor(width, height) {
+        this._graphics = new GameGraphics(width, height);
         this._assetManager = new AssetManager();
+        this._width = width;
+        this._height = height;
     }
 
     async start() {
@@ -20,6 +27,7 @@ class Game {
             await this._assetManager.load(this._graphics);
             this.addInputEvents();
 
+            await this.loadLevelDesign(1);
             this._playerLocation = [1, 1];
             this.redrawBoard();
 
@@ -28,6 +36,16 @@ class Game {
             console.log('Failed to start game');
             console.error(ex);
         }
+    }
+
+    async loadLevelDesign(level) {
+        console.log('loadld');
+        const resp = await fetch(`/levels/${level}.txt`);
+
+        let content = await resp.text();
+        content = content.replace(/\r/g, ''); // replace all \r
+        
+        this._levelDesign = content.split('\n');
     }
 
     handleKeyDown(key) {
@@ -52,31 +70,30 @@ class Game {
 
     async redrawBoard() {
         const graphics = this._graphics;
-        const terrain = this._assetManager.terrain;
-        const edge = this._assetManager.edge;
         const player = this._assetManager.player;
 
-        // set default terrain tile
-        for (let h = 0; h < graphics.height; h += terrain.height) {
-            for (let w = 0; w < graphics.width; w += terrain.width) {
-                graphics.drawImage(terrain, w, h, terrain.width, terrain.height);
+        const tileCharacterMap = {
+            '|': this._assetManager.wall,
+            '-': this._assetManager.wall,
+            '.': this._assetManager.floor,
+            '#': this._assetManager.path,
+            '+': this._assetManager.path,
+            ' ': this._assetManager.blackspace
+            
+        };
+
+        for (let y = 0; y < this._levelDesign.length; y++) {
+            let line = this._levelDesign[y];
+            for (let x = 0; x < line.length; x++) {
+                let ch = line[x];
+                let asset = tileCharacterMap[ch];
+
+                if (!asset) // this should never happen
+                    asset = this._assetManager.floor;
+
+                this._graphics.drawImage(asset, x*GameGraphics.TileSize, y*GameGraphics.TileSize, asset.width, asset.height);
             }
         }
-
-        // draw edges
-        // left and right
-        for (let h = 0; h < graphics.height; h += edge.height) {
-            graphics.drawImage(edge, 0, h, edge.width, edge.height);
-            graphics.drawImage(edge, graphics.width - edge.width, h, edge.width, edge.height);
-        }
-        // top and bottom
-        for (let w = 0; w < graphics.width; w += edge.width) {
-            graphics.drawImage(edge, w, 0, edge.width, edge.height);
-            graphics.drawImage(edge, w, graphics.height - edge.height, edge.width, edge.height);
-        }
-
-        // draw player
-        graphics.drawImage(player, this._playerLocation[0] * terrain.width, this._playerLocation[1] * terrain.height, player.width, player.height);
     }
 
 
