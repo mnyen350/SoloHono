@@ -13,6 +13,7 @@ class GameGraphics {
     get width() { return this._canvas.width; }
     get height() { return this._canvas.height; }
     get m4() { return window.m4; } // from webgl script
+    get canvas() { return this._canvas; }
 
     constructor() {
         const canvas = document.getElementById("myCanvas");
@@ -31,6 +32,9 @@ class GameGraphics {
         }
 
         const gl = this.gl;
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
         const simple_fs = await this.createShaderFromUrl(gl, "/webgl/simple_fs.txt", gl.FRAGMENT_SHADER);
         const simple_vs = await this.createShaderFromUrl(gl, "/webgl/simple_vs.txt", gl.VERTEX_SHADER);
 
@@ -57,6 +61,13 @@ class GameGraphics {
             throw new Error(`Could not compile WebGL program. \n\n${info}`);
         }
         return shader;
+    }
+
+    createCanvas() {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.width;
+        canvas.height = this.height;
+        return canvas;
     }
 
     createUseProgram(gl, vertexShader, fragmentShader) {
@@ -131,15 +142,32 @@ class GameGraphics {
         return result;
     }
 
-    texturize(gl, image) {
-        //
-        // Convert Image to WebGL Texture if needed
-        //
+    loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = function() {
+                resolve(img);
+            }
+            img.onerror = function(err) {
+                reject(err);
+            }
+            img.src = src; // start the loading
+        });
+    }
+
+    async texturize(gl, image) {
+
         if (!gl.__textureCache)
             gl.__textureCache = {};
 
+        // if image is a Canvas, then turn it into an Image
+        if (image instanceof HTMLCanvasElement) {
+            const canvas = image;
+            image = await this.loadImage(canvas.toDataURL("image/png"));
+        }
+
+        // if image is an Image then turn it into a WebGL Texture
         if (image instanceof Image) {
-            // does this image already exist in the cache?
             if (image.src && gl.__textureCache && gl.__textureCache[image.src])
                 return gl.__textureCache[image.src];
 
@@ -158,11 +186,11 @@ class GameGraphics {
             return texture;
         }
 
-        // already a texture?
+        // Possibly already a texture?
         return image;
     }
 
-    drawImage(image, dstX, dstY, texWidth, texHeight) {
+    async drawImage(image, dstX, dstY, texWidth, texHeight) {
         const m4 = this.m4;
         const gl = this.gl;
         const program = this._program;
@@ -172,7 +200,7 @@ class GameGraphics {
         //
 
         // turn it into a gl texture
-        const tex = this.texturize(gl, image);
+        const tex = await this.texturize(gl, image);
 
         gl.bindTexture(gl.TEXTURE_2D, tex);
 

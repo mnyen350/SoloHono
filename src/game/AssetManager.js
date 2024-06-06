@@ -11,11 +11,11 @@ class AssetManager {
         console.log('Loading assets...');
 
         this._images = {
-            floor: await this._loadImage('/assets/floor.png'),
-            wall: await this._loadImage('/assets/wall.png'),
-            path: await this._loadImage('/assets/path.png'),
-            blackspace: await this._loadImage('/assets/blackspace.png'),
-            player: await this._loadImage('/assets/player.png')
+            floor: await graphics.loadImage('/assets/floor.png'),
+            wall: await graphics.loadImage('/assets/wall.png'),
+            path: await graphics.loadImage('/assets/path.png'),
+            blackspace: await graphics.loadImage('/assets/blackspace.png'),
+            player: await graphics.loadImage('/assets/player.png')
         };
 
         this._sounds = {
@@ -23,19 +23,6 @@ class AssetManager {
         };
 
         console.log('All assets loaded!');
-    }
-
-    _loadImage(src) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = function() {
-                resolve(img);
-            }
-            img.onerror = function(err) {
-                reject(err);
-            }
-            img.src = src; // start the loading
-        });
     }
 }
 

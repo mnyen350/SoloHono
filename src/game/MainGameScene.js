@@ -8,8 +8,8 @@ export default class MainGameScene extends Scene {
 
     _playerLocation;
 
-    constructor(graphics, assets) {
-        super(graphics, assets);
+    constructor(game) {
+        super(game);
         this._playerLocation = [1, 1];
     }
 
@@ -43,23 +43,22 @@ export default class MainGameScene extends Scene {
                 if (!asset)
                     throw new Error(`Invalid character ${ch} in level design at line ${y+1}, column ${x+1}`);
                 const obj = new GameObject(asset, x, y);
-                row.push(obj); 
+                row.push(obj);
             }
             this._state.push(row);
         }
     }
 
-    _sanityCheckLevelDesign(levelDesign)
-    {
+    _sanityCheckLevelDesign(levelDesign) {
         // ensure that this is a valid level design
-        
+
         // height is 35
-        if(levelDesign.length != Game.Height)
+        if (levelDesign.length != Game.Height)
             throw new Error(`Level design provided does not meet the height specification of Game, expected ${Game.Height} got ${levelDesign.length}`);
 
         // width is 79
-        for(let y = 0; y < levelDesign.length; y++){
-            if(levelDesign[y].length != Game.Width)
+        for (let y = 0; y < levelDesign.length; y++) {
+            if (levelDesign[y].length != Game.Width)
                 throw new Error(`Level design provided does not meet the width specification of Game, expected ${Game.Width} got ${levelDesign[y].length} at line ${y+1}`);
         }
     }
@@ -68,39 +67,38 @@ export default class MainGameScene extends Scene {
         const key = e.key;
         if (key === 'ArrowLeft') { // left
             this._playerLocation[0]--;
-            return true;
+            this.redraw();
         } else if (key === 'ArrowRight') { // right
             this._playerLocation[0]++;
-            return true;
+            this.redraw();
         } else if (key === 'ArrowDown') { // down 
             this._playerLocation[1]++;
             this.assets.sounds.test.play();
-            return true;
+            this.redraw();
         } else if (key === 'ArrowUp') { // up
             this._playerLocation[1]--;
-            return true;
+            this.redraw();
         }
-        return false;
     }
 
-    _drawAssetAt(asset, x, y) {
-        this.graphics.drawImage(asset, x * GameGraphics.TileSize, y * GameGraphics.TileSize, asset.width, asset.height);
+    async _drawAssetAt(asset, x, y) {
+        await this.graphics.drawImage(asset, x * GameGraphics.TileSize, y * GameGraphics.TileSize, asset.width, asset.height);
     }
 
-    _drawFromLevelDesign(x, y) {
-        this._drawAssetAt(this.getObjectAt(x, y).asset, x, y);
+    async _drawFromLevelDesign(x, y) {
+        await this._drawAssetAt(this.getObjectAt(x, y).asset, x, y);
     }
 
     getObjectAt(x, y) {
         return this._state[y][x];
     }
 
-    draw() {
+    async _draw() {
         for (let y = 0; y < Game.Height; y++)
             for (let x = 0; x < Game.Width; x++)
-                this._drawFromLevelDesign(x, y);
+                await this._drawFromLevelDesign(x, y);
 
         const [px, py] = this._playerLocation;
-        this._drawAssetAt(this.assets.images.player, px, py);
+        await this._drawAssetAt(this.assets.images.player, px, py);
     }
 }

@@ -1,6 +1,7 @@
 import AssetManager from "./AssetManager";
 import GameGraphics from "./GameGraphics";
 import MainGameScene from "./MainGameScene";
+import StartGameScene from "./StartGameScene";
 
 export default class Game {
     static get Width() { return 79; }
@@ -10,7 +11,6 @@ export default class Game {
     _assets;
     _mainScene;
     _menuScene;
-    _needDraw;
 
     get graphics() { return this._graphics; }
     get assets() { return this._assets; }
@@ -19,14 +19,16 @@ export default class Game {
     constructor() {
         this._graphics = new GameGraphics();
         this._assets = new AssetManager();
-        this._mainScene = new MainGameScene(this.graphics, this.assets);
-        this._needDraw = true;
+        this._mainScene = new MainGameScene(this);
+        this._menuScene = new StartGameScene(this);
     }
 
     async start() {
         try {
             await this.graphics.load();
             await this.assets.load(this._graphics);
+            await this._menuScene.load();
+            await this._mainScene.load();
             await this._mainScene.loadLevel(1);
             this.addEvents();
         } catch (ex) {
@@ -37,28 +39,31 @@ export default class Game {
 
     addEvents() {
         let handleKeyDownEvent = (e) => {
-            if (this.activeScene.handleKeyDownEvent(e)) {
-                this._needDraw = true;
-            }
+            this.activeScene.handleKeyDownEvent(e);
         };
 
-        let requestAnimationFrame = (timeStamp) => {
-            if (this._needDraw) {
-                this.draw();
-                this._needDraw = false;
-            }
+        let requestAnimationFrame = async(timeStamp) => {
+            if (this._menuScene && this._menuScene.isClosed)
+                this._menuScene = null;
+
+            const scene = this.activeScene;
+            await scene.draw();
 
             // continue
             window.requestAnimationFrame(requestAnimationFrame);
-        }
+        };
 
+        let handleMouseMoveEvent = (e) => {
+            this.activeScene.handleMouseMoveEvent(e);
+        };
+
+        let handleClickEvent = (e) => {
+            this.activeScene.handleClickEvent(e);
+        };
+
+        this.graphics.canvas.addEventListener("mousemove", handleMouseMoveEvent);
+        this.graphics.canvas.addEventListener("click", handleClickEvent);
         window.addEventListener("keydown", handleKeyDownEvent);
         window.requestAnimationFrame(requestAnimationFrame);
-    }
-
-    async draw() {
-        const start = new Date().getTime();
-        this.activeScene.draw();
-        console.log('drawing time: ', new Date().getTime() - start);
     }
 }
