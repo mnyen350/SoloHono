@@ -3,6 +3,9 @@ import GameGraphics from "./GameGraphics";
 import MainGameScene from "./MainGameScene";
 
 export default class Game {
+    static get Width() { return 79; }
+    static get Height() { return 35; }
+
     _graphics;
     _assets;
     _mainScene;
@@ -13,8 +16,8 @@ export default class Game {
     get assets() { return this._assets; }
     get activeScene() { return (this._menuScene) ? (this._menuScene) : (this._mainScene); }
 
-    constructor(width, height) {
-        this._graphics = new GameGraphics(width, height);
+    constructor() {
+        this._graphics = new GameGraphics();
         this._assets = new AssetManager();
         this._mainScene = new MainGameScene(this.graphics, this.assets);
         this._needDraw = true;
@@ -56,6 +59,6 @@ export default class Game {
     async draw() {
         const start = new Date().getTime();
         this.activeScene.draw();
-        //console.log('drawing time: ', new Date().getTime() - start);
+        console.log('drawing time: ', new Date().getTime() - start);
     }
 }

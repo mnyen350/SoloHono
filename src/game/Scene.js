@@ -1,6 +1,6 @@
 import NotImplementedError from "./NotImplementedError";
 
-export default class IScene {
+export default class Scene {
     _graphics;
     _assets;
 

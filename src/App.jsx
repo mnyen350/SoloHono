@@ -8,7 +8,7 @@ function App() {
 
     if (!window.__GAME__) {
       console.log('Starting game!');
-      const game = window.__GAME__ = new Game(79, 35);
+      const game = window.__GAME__ = new Game();
 
       (async function () {
         await game.start();
