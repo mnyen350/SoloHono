@@ -88,7 +88,11 @@ export default class MainGameScene extends Scene {
     }
 
     _drawFromLevelDesign(x, y) {
-        this._drawAssetAt(this._state[y][x].asset, x, y);
+        this._drawAssetAt(this.getObjectAt(x, y).asset, x, y);
+    }
+
+    getObjectAt(x, y) {
+        return this._state[y][x];
     }
 
     draw() {
