@@ -62,14 +62,14 @@ export default class Scene {
 
     async load() {}
 
-    async _draw() {
+    _draw() {
         throw new NotImplementedError();
     }
     redraw() { this._needRedraw = true; }
-    async draw() {
+    draw() {
         if (this._needRedraw) {
             const start = new Date().getTime();
-            await this._draw();
+            this._draw();
             console.log('drawing time: ', new Date().getTime() - start);
             this._needRedraw = false;
         }
@@ -89,10 +89,10 @@ export default class Scene {
             btn.dispatchEvent(new CustomEvent("click", { detail: { originalEvent: e } }));
     }
 
-    async _drawButtons() {
+    _drawButtons() {
         for (const btn of this._buttons) {
             const asset = btn.asset;
-            await this.graphics.drawImage(asset, btn.x, btn.y, asset.width, asset.height);
+            this.graphics.drawImage(asset, btn.x, btn.y, asset.width, asset.height);
         }
     }
     _handleButtons() {

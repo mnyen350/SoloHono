@@ -4,13 +4,11 @@ import Game from "./Game";
 import GameObject from "./GameObject";
 
 export default class MainGameScene extends Scene {
-    _state; // 2d array of the board objects
-
-    _playerLocation;
+    _state; // [y][x] -> a list of GameObject(asset/x/y)
+    _player;
 
     constructor(game) {
         super(game);
-        this._playerLocation = [1, 1];
     }
 
     async loadLevel(level) {
@@ -41,12 +39,16 @@ export default class MainGameScene extends Scene {
                 const ch = line[x];
                 const asset = tileCharacterMap[ch];
                 if (!asset)
-                    throw new Error(`Invalid character ${ch} in level design at line ${y+1}, column ${x+1}`);
+                    throw new Error(`Invalid character ${ch} in level design at line ${y + 1}, column ${x + 1}`);
                 const obj = new GameObject(asset, x, y);
-                row.push(obj);
+                row.push([obj]);
             }
             this._state.push(row);
         }
+
+        // testing purposes
+        this._player = new GameObject(this.assets.images.player, 1, 1);
+        this.getObjectsAt(1, 1).push(this._player);
     }
 
     _sanityCheckLevelDesign(levelDesign) {
@@ -59,46 +61,65 @@ export default class MainGameScene extends Scene {
         // width is 79
         for (let y = 0; y < levelDesign.length; y++) {
             if (levelDesign[y].length != Game.Width)
-                throw new Error(`Level design provided does not meet the width specification of Game, expected ${Game.Width} got ${levelDesign[y].length} at line ${y+1}`);
+                throw new Error(`Level design provided does not meet the width specification of Game, expected ${Game.Width} got ${levelDesign[y].length} at line ${y + 1}`);
+        }
+    }
+
+    handleMovePlayer(key) {
+        const player = this._player;
+        let deltaX = 0;
+        let deltaY = 0;
+
+        if (key === 'ArrowLeft') deltaX--;
+        else if (key === 'ArrowRight') deltaX++;
+        else if (key === 'ArrowDown') deltaY++;
+        else if (key === 'ArrowUp') deltaY--;
+
+        if (deltaX != 0 || deltaY != 0) {
+            this.moveObject(player, player.x + deltaX, player.y + deltaY);
+            this.redraw();
         }
     }
 
     handleKeyDownEvent(e) {
         const key = e.key;
-        if (key === 'ArrowLeft') { // left
-            this._playerLocation[0]--;
-            this.redraw();
-        } else if (key === 'ArrowRight') { // right
-            this._playerLocation[0]++;
-            this.redraw();
-        } else if (key === 'ArrowDown') { // down 
-            this._playerLocation[1]++;
-            this.assets.sounds.test.play();
-            this.redraw();
-        } else if (key === 'ArrowUp') { // up
-            this._playerLocation[1]--;
-            this.redraw();
-        }
+        this.handleMovePlayer(key);
     }
 
-    async _drawAssetAt(asset, x, y) {
-        await this.graphics.drawImage(asset, x * GameGraphics.TileSize, y * GameGraphics.TileSize, asset.width, asset.height);
+    _drawAssetAt(asset, x, y) {
+        this.graphics.drawImage(asset, x * GameGraphics.TileSize, y * GameGraphics.TileSize, asset.width, asset.height);
     }
 
-    async _drawFromLevelDesign(x, y) {
-        await this._drawAssetAt(this.getObjectAt(x, y).asset, x, y);
+    _drawFromState(x, y) {
+        this._drawAssetAt(this.getTopObjectAt(x, y).asset, x, y);
     }
 
-    getObjectAt(x, y) {
+    moveObject(obj, dstX, dstY) {
+        //check if its legal move? (player should only move one..)
+
+        //remvoe from old location
+        const currentLocationObjs = this.getObjectsAt(obj.x, obj.y);
+        const indexOfObj = currentLocationObjs.findIndex(o => o === obj);
+        currentLocationObjs.splice(indexOfObj, 1);
+
+        //add obj at new location
+        obj.x = dstX;
+        obj.y = dstY;
+        this.getObjectsAt(dstX, dstY).push(obj);
+    }
+
+    getObjectsAt(x, y) {
         return this._state[y][x];
     }
 
-    async _draw() {
+    getTopObjectAt(x, y) {
+        let objs = this.getObjectsAt(x, y);
+        return objs[objs.length - 1];
+    }
+
+    _draw() {
         for (let y = 0; y < Game.Height; y++)
             for (let x = 0; x < Game.Width; x++)
-                await this._drawFromLevelDesign(x, y);
-
-        const [px, py] = this._playerLocation;
-        await this._drawAssetAt(this.assets.images.player, px, py);
+                this._drawFromState(x, y);
     }
 }

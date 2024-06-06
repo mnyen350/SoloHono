@@ -155,16 +155,10 @@ class GameGraphics {
         });
     }
 
-    async texturize(gl, image) {
+    texturize(gl, image) {
 
         if (!gl.__textureCache)
             gl.__textureCache = {};
-
-        // if image is a Canvas, then turn it into an Image
-        if (image instanceof HTMLCanvasElement) {
-            const canvas = image;
-            image = await this.loadImage(canvas.toDataURL("image/png"));
-        }
 
         // if image is an Image then turn it into a WebGL Texture
         if (image instanceof Image) {
@@ -180,8 +174,10 @@ class GameGraphics {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
             // update the cache with this texture for the given image
-            if (image.src)
+            if (image.src) {
                 gl.__textureCache[image.src] = texture;
+                console.log('cached texture', image.src);
+            }
 
             return texture;
         }
@@ -190,7 +186,12 @@ class GameGraphics {
         return image;
     }
 
-    async drawImage(image, dstX, dstY, texWidth, texHeight) {
+    async drawCanvas(canvas, dstX, dstY, w, h) {
+        const image = await this.loadImage(canvas.toDataURL("image/png"));
+        return this.drawImage(image, dstX, dstY, w, h);
+    }
+
+    drawImage(image, dstX, dstY, w, h) {
         const m4 = this.m4;
         const gl = this.gl;
         const program = this._program;
@@ -200,7 +201,7 @@ class GameGraphics {
         //
 
         // turn it into a gl texture
-        const tex = await this.texturize(gl, image);
+        const tex = this.texturize(gl, image);
 
         gl.bindTexture(gl.TEXTURE_2D, tex);
 
@@ -259,7 +260,7 @@ class GameGraphics {
 
         // this matrix will scale our 1 unit quad
         // from 1 unit to texWidth, texHeight units
-        matrix = m4.scale(matrix, texWidth, texHeight, 1);
+        matrix = m4.scale(matrix, w, h, 1);
 
         // Set the matrix.
         gl.uniformMatrix4fv(matrixLocation, false, matrix);

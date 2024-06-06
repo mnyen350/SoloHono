@@ -39,7 +39,9 @@ export default class Game {
 
     addEvents() {
         let handleKeyDownEvent = (e) => {
+            //const start = new Date().getTime();
             this.activeScene.handleKeyDownEvent(e);
+            //console.log('kd', new Date().getTime() - start);
         };
 
         let requestAnimationFrame = async(timeStamp) => {
