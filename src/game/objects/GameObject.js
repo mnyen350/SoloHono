@@ -1,3 +1,5 @@
+import NotImplementedError from "../NotImplementedError";
+
 export default class GameObject
 {
     _asset;
@@ -11,6 +13,8 @@ export default class GameObject
 
     get y() { return this._y; }
     set y(value) { this._y = value; }
+
+    get isMovable() { throw new NotImplementedError(); }
 
     constructor(asset, x, y) {
         this._asset = asset;

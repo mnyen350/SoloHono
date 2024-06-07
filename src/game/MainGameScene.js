@@ -1,7 +1,8 @@
 import Scene from "./Scene";
 import GameGraphics from "./GameGraphics";
 import Game from "./Game";
-import GameObject from "./GameObject";
+import GameObject from "./objects/GameObject";
+import TerrainObject from "./objects/TerrainObject";
 
 export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y)
@@ -12,15 +13,6 @@ export default class MainGameScene extends Scene {
     }
 
     async loadLevel(level) {
-        const tileCharacterMap = {
-            '|': this.assets.images.wall,
-            '-': this.assets.images.wall,
-            '.': this.assets.images.floor,
-            '#': this.assets.images.path,
-            '+': this.assets.images.path,
-            ' ': this.assets.images.blackspace
-        };
-
         const resp = await fetch(`/levels/${level}.txt`);
 
         let content = await resp.text();
@@ -37,18 +29,17 @@ export default class MainGameScene extends Scene {
             const row = []; // row of GameObject
             for (let x = 0; x < line.length; x++) {
                 const ch = line[x];
-                const asset = tileCharacterMap[ch];
-                if (!asset)
+                const obj = TerrainObject.tryCreate(this.assets, ch, x, y);
+                if (!obj)
                     throw new Error(`Invalid character ${ch} in level design at line ${y + 1}, column ${x + 1}`);
-                const obj = new GameObject(asset, x, y);
                 row.push([obj]);
             }
             this._state.push(row);
         }
 
         // testing purposes
-        this._player = new GameObject(this.assets.images.player, 1, 1);
-        this.getObjectsAt(1, 1).push(this._player);
+        this._player = new GameObject(this.assets.images.player, 3, 3);
+        this.getObjectsAt(this._player.x, this._player.y).push(this._player);
     }
 
     _sanityCheckLevelDesign(levelDesign) {
@@ -76,8 +67,9 @@ export default class MainGameScene extends Scene {
         else if (key === 'ArrowUp') deltaY--;
 
         if (deltaX != 0 || deltaY != 0) {
-            this.moveObject(player, player.x + deltaX, player.y + deltaY);
-            this.redraw();
+            let res = this.tryMoveObject(player, player.x + deltaX, player.y + deltaY);
+            if(res)
+                this.redraw();
         }
     }
 
@@ -94,9 +86,14 @@ export default class MainGameScene extends Scene {
         this._drawAssetAt(this.getTopObjectAt(x, y).asset, x, y);
     }
 
-    moveObject(obj, dstX, dstY) {
+    tryMoveObject(obj, dstX, dstY) {
         //check if its legal move? (player should only move one..)
-
+        const destinationObjs = this.getObjectsAt(dstX, dstY);
+        if(!destinationObjs) // this should never actually happen
+            return false;
+        else if (destinationObjs.find(o => !o.isMovable)) // check if any of the destinationObjs are not isMovable
+            return false;
+        
         //remvoe from old location
         const currentLocationObjs = this.getObjectsAt(obj.x, obj.y);
         const indexOfObj = currentLocationObjs.findIndex(o => o === obj);
@@ -105,7 +102,9 @@ export default class MainGameScene extends Scene {
         //add obj at new location
         obj.x = dstX;
         obj.y = dstY;
-        this.getObjectsAt(dstX, dstY).push(obj);
+        destinationObjs.push(obj);
+
+        return true;
     }
 
     getObjectsAt(x, y) {
