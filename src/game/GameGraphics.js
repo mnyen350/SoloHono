@@ -121,7 +121,7 @@ class GameGraphics {
         gl.enableVertexAttribArray(aTexCoord);
 
         // Set up texture
-        const texture = this.texturize(gl, image);
+        this.texturize(gl, image);
 
         // Uniforms
         const uImage = gl.getUniformLocation(program, 'u_image');

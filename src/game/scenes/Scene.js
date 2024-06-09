@@ -1,4 +1,4 @@
-import NotImplementedError from "./NotImplementedError";
+import NotImplementedError from "../NotImplementedError";
 
 class SceneButton extends EventTarget {
     _isHovered;
@@ -45,6 +45,7 @@ export default class Scene {
     get game() { return this._game; }
     get graphics() { return this._game.graphics; }
     get assets() { return this._game.assets; }
+    get random() { return this._game.random; }
     get mouse() { return this._mouse; }
     get isClosed() { return this._isClosed; }
 
@@ -68,9 +69,9 @@ export default class Scene {
     redraw() { this._needRedraw = true; }
     draw() {
         if (this._needRedraw) {
-            const start = new Date().getTime();
+            //const start = new Date().getTime();
             this._draw();
-            console.log('drawing time: ', new Date().getTime() - start);
+            //console.log('drawing time: ', new Date().getTime() - start);
             this._needRedraw = false;
         }
     }
@@ -100,7 +101,7 @@ export default class Scene {
 
         for (const btn of this._buttons) {
             const isHovered = btn.isOverlap(this.mouse.x, this.mouse.y);
-            if (isHovered != btn.isHovered) {
+            if (isHovered !== btn.isHovered) {
                 btn._isHovered = isHovered;
                 btn.dispatchEvent(new CustomEvent("hoverchange", { detail: { oldValue: !isHovered, newValue: isHovered } }));
                 this.redraw(); // request a redraw

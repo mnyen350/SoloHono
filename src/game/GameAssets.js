@@ -15,7 +15,8 @@ class AssetManager {
             wall: await graphics.loadImage('/assets/wall.png'),
             path: await graphics.loadImage('/assets/path.png'),
             blackspace: await graphics.loadImage('/assets/blackspace.png'),
-            player: await graphics.loadImage('/assets/player.png')
+            player: await graphics.loadImage('/assets/player.png'),
+            enemy: await graphics.loadImage('/assets/enemy.png')
         };
 
         this._sounds = {
