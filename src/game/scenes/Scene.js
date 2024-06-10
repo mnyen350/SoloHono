@@ -42,15 +42,20 @@ export default class Scene {
     _buttons = [];
     _isClosed;
     _isActive;
+    _isLoaded;
 
     get game() { return this._game; }
     get graphics() { return this._game.graphics; }
     get assets() { return this._game.assets; }
     get random() { return this._game.random; }
     get mouse() { return this._mouse; }
+
     get isClosed() { return this._isClosed; }
+
     get isActive() { return this._isActive; }
     set isActive(value) { this._isActive = value; }
+
+    get isLoaded() { return this._isLoaded; }
 
     constructor(game) {
         this._game = game;
@@ -65,7 +70,9 @@ export default class Scene {
         this._isClosed = true;
     }
 
-    async load() {}
+    async load() {
+        this._isLoaded = true;
+    }
     async unload() {}
     async updateActiveScene(isActive) {}
 

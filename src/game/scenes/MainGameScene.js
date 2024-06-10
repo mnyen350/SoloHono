@@ -62,6 +62,7 @@ export default class MainGameScene extends Scene {
     async load() {
         this._spawnPlayer();
         this._spawnEnemies();
+        await super.load();
     }
 
     async unload() {}

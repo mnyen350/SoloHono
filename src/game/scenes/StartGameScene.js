@@ -1,3 +1,4 @@
+import OptionsScene from "./OptionsScene";
 import Scene from "./Scene";
 
 export default class StartGameScene extends Scene {
@@ -20,19 +21,20 @@ export default class StartGameScene extends Scene {
     }
 
     async load() {
-        this._bg = await this.graphics.loadImage("/assets/mainmenu/bg.png");
 
-        const loadgame1 = await this.graphics.loadImage("/assets/mainmenu/loadgamev1.png");
-        const loadgame2 = await this.graphics.loadImage("/assets/mainmenu/loadgamev2.png");
+        const {
+            bg,
+            loadgame1,
+            loadgame2,
+            newgame1,
+            newgame2,
+            exit1,
+            exit2,
+            options1,
+            options2
+        } = this.game.assets.images.mainMenu;
 
-        const newgame1 = await this.graphics.loadImage("/assets/mainmenu/newgamev1.png");
-        const newgame2 = await this.graphics.loadImage("/assets/mainmenu/newgamev2.png");
-
-        const exit1 = await this.graphics.loadImage("/assets/mainmenu/exitv1.png");
-        const exit2 = await this.graphics.loadImage("/assets/mainmenu/exitv2.png");
-
-        const options1 = await this.graphics.loadImage("/assets/mainmenu/optionsv1.png");
-        const options2 = await this.graphics.loadImage("/assets/mainmenu/optionsv2.png");
+        this._bg = bg;
 
         const newGame = this.createButton(700, 15, newgame1);
         newGame.addEventListener("hoverchange", (e) => newGame.setAsset(newGame.isHovered ? newgame2 : newgame1));
@@ -49,7 +51,8 @@ export default class StartGameScene extends Scene {
         const options = this.createButton(700, 15 + (newgame1.height + 20) * 2, options1);
         options.addEventListener("hoverchange", (e) => options.setAsset(options.isHovered ? options2 : options1));
         options.addEventListener("click", (e) => {
-
+            console.log('options clicked');
+            this.game.menuScene = new OptionsScene(this.game);
         });
 
         const exit = this.createButton(700, 15 + (newgame1.height + 20) * 3, exit1);
@@ -57,6 +60,8 @@ export default class StartGameScene extends Scene {
         exit.addEventListener("click", (e) => {
 
         });
+
+        await super.load();
     }
 
     _draw() {

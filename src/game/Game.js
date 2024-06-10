@@ -21,12 +21,38 @@ export default class Game {
     _soundVolume;
     _musicVolume;
 
+    set soundVolume(value) {
+        this._soundVolume = value;
+        this.adjustVolume();
+    }
     get soundVolume() { return this._soundVolume; }
+    set musicVolume(value) {
+        this._musicVolume = value;
+        this.adjustVolume();
+    }
     get musicVolume() { return this._musicVolume; }
+
+    adjustVolume() {
+        // update all sounds
+        for (const key in this.assets.sounds) {
+            const sound = this.assets.sounds[key];
+            sound.adjustVolume();
+        }
+    }
 
     get graphics() { return this._graphics; }
     get assets() { return this._assets; }
     get random() { return this._random; }
+
+    get menuScene() { return this._menuScene; }
+    set menuScene(value) {
+        if (this._menuScene && this._menuScene.isActive) {
+            this._menuScene.isActive = false;
+            this._menuScene.unload();
+        }
+        this._menuScene = value;
+    }
+
     get activeScene() { return (this._menuScene) ? (this._menuScene) : (this._mainScene); }
 
     constructor() {
@@ -53,13 +79,8 @@ export default class Game {
     async start() {
         try {
             await this.graphics.load();
-
             await this.assets.load();
-
-            await this._menuScene.load();
-
             await this._mainScene.loadLevelDesign(1);
-            await this._mainScene.load();
             this.addEvents();
         } catch (ex) {
             console.log('Failed to start game');
@@ -93,6 +114,9 @@ export default class Game {
             }
 
             const scene = this.activeScene;
+            if (!scene.isLoaded) {
+                await scene.load();
+            }
             await scene.draw();
 
             // continue
@@ -105,10 +129,14 @@ export default class Game {
 
         let handleClickEvent = (e) => {
             this.activeScene.handleClickEvent(e);
+            e.preventDefault();
+            e.stopPropagation();
         };
 
         this.graphics.canvas.addEventListener("mousemove", handleMouseMoveEvent);
         this.graphics.canvas.addEventListener("click", handleClickEvent);
+        this.graphics.canvas.addEventListener("selectstart", () => false);
+        this.graphics.canvas.addEventListener("mousedown", (e) => e.preventDefault());
         window.addEventListener("keydown", handleKeyDownEvent);
         window.requestAnimationFrame(requestAnimationFrame);
     }

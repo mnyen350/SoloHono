@@ -1,32 +1,4 @@
-class GameAudio extends Audio {
-    _game;
-    _isMusic;
-
-    get game() { return this._game; }
-    get isMusic() { return this._isMusic; }
-
-    constructor(game, src, options) {
-        super(src);
-
-        if (options) {
-            for (const key in options)
-                this[key] = options[key];
-        }
-
-        this._game = game;
-    }
-
-    play() {
-        this.volume = this.isMusic ? this.game.musicVolume : this.game.soundVolume;
-        super.play();
-        console.log('playing audio', this.src);
-    }
-
-    pause() {
-        super.pause();
-        console.log('pausing audio', this.src);
-    }
-}
+import GameAudio from "./GameAudio";
 
 export default class GameAssets {
     _images;
@@ -51,13 +23,35 @@ export default class GameAssets {
             path: await graphics.loadImage('/assets/path.png'),
             blackspace: await graphics.loadImage('/assets/blackspace.png'),
             player: await graphics.loadImage('/assets/player.png'),
-            enemy: await graphics.loadImage('/assets/enemy.png')
+            enemy: await graphics.loadImage('/assets/enemy.png'),
+
+            mainMenu: {
+                bg: await graphics.loadImage("/assets/mainmenu/bg.png"),
+                loadgame1: await graphics.loadImage("/assets/mainmenu/loadgamev1.png"),
+                loadgame2: await graphics.loadImage("/assets/mainmenu/loadgamev2.png"),
+                newgame1: await graphics.loadImage("/assets/mainmenu/newgamev1.png"),
+                newgame2: await graphics.loadImage("/assets/mainmenu/newgamev2.png"),
+                exit1: await graphics.loadImage("/assets/mainmenu/exitv1.png"),
+                exit2: await graphics.loadImage("/assets/mainmenu/exitv2.png"),
+                options1: await graphics.loadImage("/assets/mainmenu/optionsv1.png"),
+                options2: await graphics.loadImage("/assets/mainmenu/optionsv2.png")
+            },
+
+            optionsMenu: {
+                bg: await graphics.loadImage("/assets/optionsmenu/bg.png"),
+                plus1: await graphics.loadImage("/assets/optionsmenu/plusv1.png"),
+                plus2: await graphics.loadImage("/assets/optionsmenu/plusv2.png"),
+                minus1: await graphics.loadImage("/assets/optionsmenu/minusv1.png"),
+                minus2: await graphics.loadImage("/assets/optionsmenu/minusv2.png"),
+                back1: await graphics.loadImage("/assets/optionsmenu/backv1.png"),
+                back2: await graphics.loadImage("/assets/optionsmenu/backv2.png")
+            }
         };
 
         this._sounds = {
             test: new GameAudio(this.game, '/assets/sounds/test.wav'),
-            startGame: new GameAudio(this.game, '/assets/sounds/mainmenu.mp3', { loop: true }),
-            mainGame: new GameAudio(this.game, '/assets/sounds/gamebgm.mp3', { loop: true })
+            startGame: new GameAudio(this.game, '/assets/sounds/mainmenu.mp3', { loop: true, _isMusic: true }),
+            mainGame: new GameAudio(this.game, '/assets/sounds/gamebgm.mp3', { loop: true, _isMusic: true })
         };
 
         console.log('All assets loaded!');
