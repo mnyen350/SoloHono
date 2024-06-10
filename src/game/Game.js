@@ -17,6 +17,13 @@ export default class Game {
     _mainScene;
     _menuScene;
 
+    // settings
+    _soundVolume;
+    _musicVolume;
+
+    get soundVolume() { return this._soundVolume; }
+    get musicVolume() { return this._musicVolume; }
+
     get graphics() { return this._graphics; }
     get assets() { return this._assets; }
     get random() { return this._random; }
@@ -25,8 +32,11 @@ export default class Game {
     constructor() {
         Game._instance = this;
 
+        this._soundVolume = 1.0;
+        this._musicVolume = 1.0;
+
         this._graphics = new GameGraphics();
-        this._assets = new GameAssets();
+        this._assets = new GameAssets(this);
         this._random = new Random(123); // we pick a static seed for consistent testing
         this._mainScene = new MainGameScene(this);
         this._menuScene = new StartGameScene(this);
@@ -44,7 +54,7 @@ export default class Game {
         try {
             await this.graphics.load();
 
-            await this.assets.load(this._graphics);
+            await this.assets.load();
 
             await this._menuScene.load();
 

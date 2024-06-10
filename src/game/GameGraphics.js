@@ -149,6 +149,7 @@ class GameGraphics {
                 resolve(img);
             }
             img.onerror = function(err) {
+                console.error('Failed to load image', src);
                 reject(err);
             }
             img.src = src; // start the loading
