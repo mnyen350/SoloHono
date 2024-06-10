@@ -16,6 +16,8 @@ export default class EnemyObject extends GameObject {
         return obj;
     }
 
+    get isMovable() { return false; }
+
     constructor(game, asset) {
         super(game, asset);
     }
