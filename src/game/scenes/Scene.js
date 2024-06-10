@@ -41,6 +41,7 @@ export default class Scene {
     _mouse;
     _buttons = [];
     _isClosed;
+    _isActive;
 
     get game() { return this._game; }
     get graphics() { return this._game.graphics; }
@@ -48,6 +49,8 @@ export default class Scene {
     get random() { return this._game.random; }
     get mouse() { return this._mouse; }
     get isClosed() { return this._isClosed; }
+    get isActive() { return this._isActive; }
+    set isActive(value) { this._isActive = value; }
 
     constructor(game) {
         this._game = game;
@@ -55,6 +58,7 @@ export default class Scene {
         this._mouse = { x: 0, y: 0 };
         this._buttons = [];
         this._isClosed = false;
+        this._isActive = false;
     }
 
     close() {
@@ -62,6 +66,8 @@ export default class Scene {
     }
 
     async load() {}
+    async unload() {}
+    async updateActiveScene(isActive) {}
 
     _draw() {
         throw new NotImplementedError();

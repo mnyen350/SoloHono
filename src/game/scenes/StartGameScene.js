@@ -3,6 +3,18 @@ import Scene from "./Scene";
 export default class StartGameScene extends Scene {
     _bg;
 
+    get isActive() { return super.isActive; }
+    set isActive(value) {
+        if (this.isActive != value) {
+            const music = this.assets.sounds.startGame;
+            if (value)
+                music.play();
+            else
+                music.pause();
+        }
+        super.isActive = value;
+    }
+
     constructor(game) {
         super(game);
     }

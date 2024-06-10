@@ -32,7 +32,7 @@ export default class EnemyObject extends GameObject {
         // filter for only movable xy
         xy = xy.filter(([x, y]) => this.game.isMovable(x, y, true));
         if (xy.length == 0) {
-            console.log('xy len = 0');
+            //console.log('xy len = 0');
             return;
         }
 

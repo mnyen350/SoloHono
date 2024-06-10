@@ -43,10 +43,13 @@ export default class Game {
     async start() {
         try {
             await this.graphics.load();
+
             await this.assets.load(this._graphics);
+
             await this._menuScene.load();
+
+            await this._mainScene.loadLevelDesign(1);
             await this._mainScene.load();
-            await this._mainScene.loadLevel(1);
             this.addEvents();
         } catch (ex) {
             console.log('Failed to start game');
@@ -62,8 +65,22 @@ export default class Game {
         };
 
         let requestAnimationFrame = async(timeStamp) => {
-            if (this._menuScene && this._menuScene.isClosed)
+
+            if (this._menuScene && this._menuScene.isClosed) {
+                this._menuScene.isActive = false;
+                await this._menuScene.unload();
                 this._menuScene = null;
+            }
+
+            if (!this._menuScene) {
+                // no menu scene, so main scene is active
+                if (!this._mainScene.isActive) {
+                    this._mainScene.isActive = true;
+                }
+            } else if (!this._menuScene.isActive) {
+                this._menuScene.isActive = true;
+                this._mainScene.isActive = false;
+            }
 
             const scene = this.activeScene;
             await scene.draw();

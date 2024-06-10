@@ -9,18 +9,32 @@ export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y)
     _player;
     _enemies;
+    _levelDesign;
+
+    get isActive() { return super.isActive; }
+    set isActive(value) {
+        if (this.isActive != value) {
+            const music = this.assets.sounds.mainGame;
+            if (value)
+                music.play();
+            else
+                music.pause();
+        }
+        super.isActive = value;
+    }
 
     constructor(game) {
         super(game);
     }
 
-    async loadLevel(level) {
+    async loadLevelDesign(level) {
         const resp = await fetch(`/levels/${level}.txt`);
 
         let content = await resp.text();
         content = content.replace(/\r/g, ''); // replace all \r
 
         const levelDesign = content.split('\n');
+        this._levelDesign = levelDesign;
 
         // sanity check the level design
         this._sanityCheckLevelDesign(levelDesign);
@@ -29,10 +43,10 @@ export default class MainGameScene extends Scene {
         this._enemies = [];
         this._player = null;
 
-        for (let y = 0; y < levelDesign.length; y++) {
+        for (let y = 0; y < Game.Height; y++) {
             const line = levelDesign[y];
             const row = []; // row of GameObject
-            for (let x = 0; x < line.length; x++) {
+            for (let x = 0; x < Game.Width; x++) {
                 const ch = line[x];
                 const obj = TerrainObject.tryCreate(this.game, ch);
                 if (!obj)
@@ -43,10 +57,15 @@ export default class MainGameScene extends Scene {
             }
             this._state.push(row);
         }
+    }
 
+    async load() {
         this._spawnPlayer();
         this._spawnEnemies();
     }
+
+    async unload() {}
+
 
     isMovable(x, y, empty) {
         if (x < 0 || y < 0)

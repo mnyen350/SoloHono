@@ -1,4 +1,11 @@
-class AssetManager {
+function createAudio(src, options) {
+    const audio = new Audio(src);
+    for (const key in options)
+        audio[key] = options[key];
+    return audio;
+}
+
+export default class GameAssets {
     _images;
     _sounds;
 
@@ -20,11 +27,11 @@ class AssetManager {
         };
 
         this._sounds = {
-            test: new Audio('/assets/test.wav')
+            test: createAudio('/assets/sounds/test.wav'),
+            startGame: createAudio('/assets/sounds/rf2shop.mp3', { loop: true }),
+            mainGame: createAudio('/assets/sounds/rf3bmg.mp3', { loop: true })
         };
 
         console.log('All assets loaded!');
     }
 }
-
-export default AssetManager;
