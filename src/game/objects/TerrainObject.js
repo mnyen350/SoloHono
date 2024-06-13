@@ -1,9 +1,16 @@
 //import NotImplementedError from "../NotImplementedError";
 import GameObject from "./GameObject";
+import ObjectType from "./ObjectType";
 
 export default class TerrainObject extends GameObject {
 
-    static tryCreate(game, ch) {
+    _isMovable;
+
+    get isMovable() {
+        return this._isMovable;
+    }
+
+    constructor(game, ch) {
 
         // char -> { asset, isMovable }
         const assets = game.assets;
@@ -18,20 +25,9 @@ export default class TerrainObject extends GameObject {
 
         const found = tileCharacterMap[ch];
         if (!found)
-            return null;
+            throw new Error(`Invalid TerrainObject character ${ch}`);
 
-        const obj = new TerrainObject(game, found.asset, found.isMovable);
-        return obj;
-    }
-
-    _isMovable;
-
-    get isMovable() {
-        return this._isMovable;
-    }
-
-    constructor(game, asset, isMovable) {
-        super(game, asset);
-        this._isMovable = isMovable;
+        super(game, found.asset, ObjectType.terrain);
+        this._isMovable = found.isMovable;
     }
 }

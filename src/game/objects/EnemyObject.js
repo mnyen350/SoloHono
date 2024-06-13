@@ -1,25 +1,26 @@
 import GameObject from "./GameObject";
+import EnemyType from "./EnemyType";
+import ObjectType from "./ObjectType";
 
 export default class EnemyObject extends GameObject {
-    static get TYPE_TEST() { return 1; }
 
-    static tryCreate(game, type) {
-        const typeMap = {
-            [EnemyObject.TYPE_TEST]: game.assets.images.enemy
-        };
-
-        const found = typeMap[type];
-        if (!found)
-            return null;
-
-        const obj = new EnemyObject(game, found);
-        return obj;
-    }
+    _enemyType;
 
     get isMovable() { return false; }
+    get enemyType() { return this._enemyType; }
 
-    constructor(game, asset) {
-        super(game, asset);
+    constructor(game, enemyType) {
+
+        const typeMap = {
+            [EnemyType.test]: game.assets.images.enemy
+        };
+
+        const asset = typeMap[enemyType];
+        if (!asset)
+            throw new Error(`Invalid enemyType ${enemyType}`);
+
+        super(game, asset, ObjectType.enemy);
+        this._enemyType = enemyType;
     }
 
     nextTurn() {

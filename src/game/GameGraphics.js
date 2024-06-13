@@ -23,7 +23,7 @@ class GameGraphics {
         //console.log('Set canvas dimensions to ' + canvas.width + ' ' + canvas.height);
 
         this._canvas = canvas;
-        this._gl = canvas.getContext("webgl");
+        this._gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
     }
 
     async load() {
@@ -162,7 +162,7 @@ class GameGraphics {
             gl.__textureCache = {};
 
         // if image is an Image then turn it into a WebGL Texture
-        if (image instanceof Image) {
+        if ((image instanceof Image) || (image instanceof HTMLCanvasElement)) {
             if (image.src && gl.__textureCache && gl.__textureCache[image.src])
                 return gl.__textureCache[image.src];
 
@@ -187,9 +187,28 @@ class GameGraphics {
         return image;
     }
 
-    async drawCanvas(canvas, dstX, dstY, w, h) {
-        const image = await this.loadImage(canvas.toDataURL("image/png"));
-        return this.drawImage(image, dstX, dstY, w, h);
+    drawText(text, font, fillStyle, x, y) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.font = font;
+        const width = ctx.measureText(text).width;
+        const height = parseInt(font);
+        canvas.width = Math.floor(width);
+        canvas.height = Math.floor(height);
+        ctx.font = font;
+        if (fillStyle)
+            ctx.fillStyle = fillStyle;
+        ctx.fillText(text, 0, height);
+        this.drawCanvas(canvas, x, y, canvas.width, canvas.height);
+    }
+
+    drawCanvas(canvas, dstX, dstY, w, h) {
+        const img = new Image();
+        img.onload = () => this.drawImage(img, dstX, dstY, w, h);
+        img.onerror = function(err) {
+            console.error('Failed to load canvas', err);
+        }
+        img.src = canvas.toDataURL("image/png"); // start the loading
     }
 
     drawImage(image, dstX, dstY, w, h) {

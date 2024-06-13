@@ -18,6 +18,9 @@ export default class GameAssets {
         const graphics = this.game.graphics;
 
         this._images = {
+            //
+            attackButton: await graphics.loadImage('/assets/attack.png'),
+            //
             floor: await graphics.loadImage('/assets/floor.png'),
             wall: await graphics.loadImage('/assets/wall.png'),
             path: await graphics.loadImage('/assets/path.png'),

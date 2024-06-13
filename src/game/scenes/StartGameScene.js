@@ -65,11 +65,6 @@ export default class StartGameScene extends Scene {
     }
 
     _draw() {
-        //const test = this.graphics.createCanvas();
-        //const ctx = test.getContext('2d');
-        //ctx.font = "48px serif";
-        //ctx.strokeText("Hello world", 10, 50);
-
         const bg = this._bg;
         this.graphics.drawImage(bg, 0, 0, bg.width, bg.height);
         this._drawButtons();

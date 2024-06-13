@@ -64,8 +64,6 @@ export default class Game {
         this._graphics = new GameGraphics();
         this._assets = new GameAssets(this);
         this._random = new Random(123); // we pick a static seed for consistent testing
-        this._mainScene = new MainGameScene(this);
-        this._menuScene = new StartGameScene(this);
     }
 
     isMovable(x, y, empty) {
@@ -80,8 +78,11 @@ export default class Game {
         try {
             await this.graphics.load();
             await this.assets.load();
-            await this._mainScene.loadLevelDesign(1);
             this.addEvents();
+
+            this._mainScene = new MainGameScene(this);
+            this._menuScene = new StartGameScene(this);
+            await this._mainScene.loadLevelDesign(1);
         } catch (ex) {
             console.log('Failed to start game');
             console.error(ex);
@@ -125,6 +126,7 @@ export default class Game {
 
         let handleMouseMoveEvent = (e) => {
             this.activeScene.handleMouseMoveEvent(e);
+            this.activeScene.adjustPointer();
         };
 
         let handleClickEvent = (e) => {
@@ -133,8 +135,14 @@ export default class Game {
             e.stopPropagation();
         };
 
+        let handleContextMenu = (e) => {
+            this.activeScene.handleContextMenu(e);
+            e.preventDefault();
+        }
+
         this.graphics.canvas.addEventListener("mousemove", handleMouseMoveEvent);
         this.graphics.canvas.addEventListener("click", handleClickEvent);
+        this.graphics.canvas.addEventListener("contextmenu", handleContextMenu);
         this.graphics.canvas.addEventListener("selectstart", () => false);
         this.graphics.canvas.addEventListener("mousedown", (e) => e.preventDefault());
         window.addEventListener("keydown", handleKeyDownEvent);

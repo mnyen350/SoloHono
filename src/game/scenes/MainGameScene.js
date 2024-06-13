@@ -4,12 +4,17 @@ import Game from "../Game";
 import GameObject from "../objects/GameObject";
 import TerrainObject from "../objects/TerrainObject";
 import EnemyObject from "../objects/EnemyObject";
+import EnemyType from "../objects/EnemyType";
+import ObjectType from "../objects/ObjectType";
 
 export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y)
     _player;
     _enemies;
     _levelDesign;
+
+    _selectedEnemy;
+    _attackButton;
 
     get isActive() { return super.isActive; }
     set isActive(value) {
@@ -25,6 +30,13 @@ export default class MainGameScene extends Scene {
 
     constructor(game) {
         super(game);
+
+        this._attackButton = this.createButton(100, 100, this.assets.images.attackButton);
+        this._attackButton.isVisible = false;
+        this._attackButton.addEventListener("click", (e) => {
+            console.log('attack button clicked');
+            console.log('attacking', this._selectedEnemy);
+        });
     }
 
     async loadLevelDesign(level) {
@@ -48,9 +60,7 @@ export default class MainGameScene extends Scene {
             const row = []; // row of GameObject
             for (let x = 0; x < Game.Width; x++) {
                 const ch = line[x];
-                const obj = TerrainObject.tryCreate(this.game, ch);
-                if (!obj)
-                    throw new Error(`Invalid character ${ch} in level design at line ${y + 1}, column ${x + 1}`);
+                const obj = new TerrainObject(this.game, ch);
                 obj.x = x;
                 obj.y = y;
                 row.push([obj]);
@@ -103,7 +113,7 @@ export default class MainGameScene extends Scene {
 
     _spawnPlayer() {
         const [rx, ry] = this._findAvailableLocation();
-        this._player = new GameObject(this.game, this.assets.images.player);
+        this._player = new GameObject(this.game, this.assets.images.player, ObjectType.player);
         this.tryMoveObject(this._player, rx, ry);
 
         //console.log('spawned player at', [ok, px, py]);
@@ -113,10 +123,7 @@ export default class MainGameScene extends Scene {
     _spawnEnemies() {
         for (let i = 0; i < 5; i++) {
             const [rx, ry] = this._findAvailableLocation();
-            const enemy = EnemyObject.tryCreate(this.game, EnemyObject.TYPE_TEST);
-            if (!enemy)
-                throw new Error(`Failed to create enemy`);
-
+            const enemy = new EnemyObject(this.game, EnemyType.test);
             this._enemies.push(enemy);
             this.tryMoveObject(enemy, rx, ry);
         }
@@ -134,6 +141,55 @@ export default class MainGameScene extends Scene {
             if (levelDesign[y].length != Game.Width)
                 throw new Error(`Level design provided does not meet the width specification of Game, expected ${Game.Width} got ${levelDesign[y].length} at line ${y + 1}`);
         }
+    }
+
+    handleMouseMoveEvent(e) {
+        super.handleMouseMoveEvent(e);
+
+        const x = Math.floor(this.mouse.x / GameGraphics.TileSize);
+        const y = Math.floor(this.mouse.y / GameGraphics.TileSize);
+        const obj = this.getTopObjectAt(x, y);
+        if (!obj) return;
+
+        if (obj.objectType == ObjectType.enemy) {
+            this._showPointer = true;
+        } else if (obj.objectType == ObjectType.player) {
+            this._showPointer = true;
+        }
+    }
+
+    handleContextMenu(e) {
+        this._attackButton.isVisible = false;
+        this.redraw();
+    }
+
+    handleClickEvent(e) {
+        super.handleClickEvent(e);
+
+        this._selectedEnemy = null;
+        this._attackButton.isVisible = false;
+
+        // only if a button wasn't clicked
+        if (!this._buttons.find(b => b.isVisible && b.isOverlap(e.offsetX, e.offsetY))) {
+            const x = Math.floor(this.mouse.x / GameGraphics.TileSize);
+            const y = Math.floor(this.mouse.y / GameGraphics.TileSize);
+            const obj = this.getTopObjectAt(x, y);
+
+            if (obj) {
+                if (obj.objectType == ObjectType.enemy) {
+                    this._selectedEnemy = obj;
+                    this._attackButton.isVisible = true;
+                    this.redraw();
+
+                    console.log('enemy selected', obj);
+                } else if (obj.objectType == ObjectType.player) {
+                    console.log('player');
+                }
+            }
+        }
+
+
+        this.redraw();
     }
 
     handleMovePlayer(key) {
@@ -204,6 +260,8 @@ export default class MainGameScene extends Scene {
     }
 
     getObjectsAt(x, y) {
+        if (x < 0 || y < 0) return [];
+        else if (x >= Game.Width || y >= Game.Height) return [];
         return this._state[y][x];
     }
 
@@ -216,5 +274,9 @@ export default class MainGameScene extends Scene {
         for (let y = 0; y < Game.Height; y++)
             for (let x = 0; x < Game.Width; x++)
                 this._drawFromState(x, y);
+
+        this._drawButtons();
+
+        this.graphics.drawText("Level: 1, HP: 10", "14px serif", "white", 0, 0);
     }
 }
