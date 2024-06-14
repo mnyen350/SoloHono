@@ -27,6 +27,7 @@ export default class GameAssets {
             blackspace: await graphics.loadImage('/assets/blackspace.png'),
             player: await graphics.loadImage('/assets/player.png'),
             enemy: await graphics.loadImage('/assets/enemy.png'),
+            door: await graphics.loadImage('/assets/door.png'),
 
             mainMenu: {
                 bg: await graphics.loadImage("/assets/mainmenu/bg.png"),

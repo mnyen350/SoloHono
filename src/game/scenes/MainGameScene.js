@@ -6,6 +6,7 @@ import TerrainObject from "../objects/TerrainObject";
 import EnemyObject from "../objects/EnemyObject";
 import EnemyType from "../objects/EnemyType";
 import ObjectType from "../objects/ObjectType";
+import DoorObject from "../objects/DoorObject";
 
 export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y/...)
@@ -35,6 +36,8 @@ export default class MainGameScene extends Scene {
     constructor(game) {
         super(game);
 
+        this._player = null;
+
         this._attackButton = this.createButton(100, 100, this.assets.images.attackButton);
         this._attackButton.isVisible = false;
         this._attackButton.addEventListener("click", (e) => this.attackButtonClick(e));
@@ -55,7 +58,6 @@ export default class MainGameScene extends Scene {
 
         this._state = [];
         this._enemies = [];
-        this._player = null;
 
         for (let y = 0; y < Game.Height; y++) {
             const line = levelDesign[y];
@@ -69,11 +71,13 @@ export default class MainGameScene extends Scene {
             }
             this._state.push(row);
         }
+
+        this._spawnPlayer();
+        this._spawnEnemies();
+        this._spawnDoor();
     }
 
     async load() {
-        this._spawnPlayer();
-        this._spawnEnemies();
         await super.load();
     }
 
@@ -113,13 +117,18 @@ export default class MainGameScene extends Scene {
         throw new Error(`Unable to find available location within ${LIMIT} tries`);
     }
 
-    _spawnPlayer() {
+    _spawnDoor() {
         const [rx, ry] = this._findAvailableLocation();
-        this._player = new PlayerObject(this.game);
-        this.tryMoveObject(this._player, rx, ry);
+        const door = new DoorObject(this.game);
+        this.tryMoveObject(door, rx, ry);
+    }
 
-        //console.log('spawned player at', [ok, px, py]);
-        //console.log([this._player.x, this._player.y]);
+    _spawnPlayer() {
+        if (!this._player)
+            this._player = new PlayerObject(this.game);
+
+        const [rx, ry] = this._findAvailableLocation();
+        this.tryMoveObject(this._player, rx, ry);
     }
 
     _spawnEnemies() {
@@ -225,7 +234,7 @@ export default class MainGameScene extends Scene {
         this.redraw();
     }
 
-    handleMovePlayer(key) {
+    async handleMovePlayer(key) {
         const player = this._player;
         let deltaX = 0;
         let deltaY = 0;
@@ -238,7 +247,19 @@ export default class MainGameScene extends Scene {
         if (deltaX != 0 || deltaY != 0) {
             let res = this.tryMoveObject(player, player.x + deltaX, player.y + deltaY);
             if (res) {
-                this.nextTurn();
+                const objs = this.getObjectsAt(player.x, player.y);
+                const door = objs.find(o => o.objectType == ObjectType.door);
+                if (!door) {
+                    this.nextTurn();
+                } else { // stepped onto door, advance to next level
+
+                    if (this._level == 3) {
+                        console.log('game completed.');
+                    } else {
+                        await this.loadLevelDesign(this._level + 1);
+                        this.redraw();
+                    }
+                }
             }
         }
     }
