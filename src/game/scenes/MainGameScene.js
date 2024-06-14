@@ -1,20 +1,24 @@
 import Scene from "./Scene";
 import GameGraphics from "../GameGraphics";
 import Game from "../Game";
-import GameObject from "../objects/GameObject";
+import PlayerObject from "../objects/PlayerObject";
 import TerrainObject from "../objects/TerrainObject";
 import EnemyObject from "../objects/EnemyObject";
 import EnemyType from "../objects/EnemyType";
 import ObjectType from "../objects/ObjectType";
 
 export default class MainGameScene extends Scene {
-    _state; // [y][x] -> a list of GameObject(asset/x/y)
+    _state; // [y][x] -> a list of GameObject(asset/x/y/...)
     _player;
     _enemies;
+
+    _level;
     _levelDesign;
 
     _selectedEnemy;
     _attackButton;
+
+    get player() { return this._player; }
 
     get isActive() { return super.isActive; }
     set isActive(value) {
@@ -33,10 +37,7 @@ export default class MainGameScene extends Scene {
 
         this._attackButton = this.createButton(100, 100, this.assets.images.attackButton);
         this._attackButton.isVisible = false;
-        this._attackButton.addEventListener("click", (e) => {
-            console.log('attack button clicked');
-            console.log('attacking', this._selectedEnemy);
-        });
+        this._attackButton.addEventListener("click", (e) => this.attackButtonClick(e));
     }
 
     async loadLevelDesign(level) {
@@ -47,6 +48,7 @@ export default class MainGameScene extends Scene {
 
         const levelDesign = content.split('\n');
         this._levelDesign = levelDesign;
+        this._level = level;
 
         // sanity check the level design
         this._sanityCheckLevelDesign(levelDesign);
@@ -113,7 +115,7 @@ export default class MainGameScene extends Scene {
 
     _spawnPlayer() {
         const [rx, ry] = this._findAvailableLocation();
-        this._player = new GameObject(this.game, this.assets.images.player, ObjectType.player);
+        this._player = new PlayerObject(this.game);
         this.tryMoveObject(this._player, rx, ry);
 
         //console.log('spawned player at', [ok, px, py]);
@@ -143,6 +145,22 @@ export default class MainGameScene extends Scene {
         }
     }
 
+    attackButtonClick(e) {
+        if (!this._selectedEnemy) return;
+        if (this._selectedEnemy.isDead) return;
+        if (!this.game.isAdjacentObjects(this._player, this._selectedEnemy)) return;
+
+        console.log('attack button clicked');
+        console.log('attacking', this._selectedEnemy);
+
+        this._player.attack(this._selectedEnemy);
+
+        console.log('new enemy hp: ', this._selectedEnemy.health);
+
+        // trigger the next turn since the player took an action
+        this.nextTurn();
+    }
+
     handleMouseMoveEvent(e) {
         super.handleMouseMoveEvent(e);
 
@@ -152,7 +170,9 @@ export default class MainGameScene extends Scene {
         if (!obj) return;
 
         if (obj.objectType == ObjectType.enemy) {
-            this._showPointer = true;
+            if (this.game.isAdjacentObjects(this._player, obj)) {
+                this._showPointer = true;
+            }
         } else if (obj.objectType == ObjectType.player) {
             this._showPointer = true;
         }
@@ -177,11 +197,15 @@ export default class MainGameScene extends Scene {
 
             if (obj) {
                 if (obj.objectType == ObjectType.enemy) {
-                    this._selectedEnemy = obj;
-                    this._attackButton.isVisible = true;
-                    this.redraw();
 
-                    console.log('enemy selected', obj);
+                    if (this.game.isAdjacentObjects(this._player, obj)) {
+                        this._selectedEnemy = obj;
+                        this._attackButton.isVisible = true;
+                        this.redraw();
+
+                        console.log('enemy selected', obj);
+                    }
+
                 } else if (obj.objectType == ObjectType.player) {
                     console.log('player');
                 }
@@ -189,6 +213,15 @@ export default class MainGameScene extends Scene {
         }
 
 
+        this.redraw();
+    }
+
+    nextTurn() {
+        // next turn
+        for (const e of this.getAllObjects())
+            e.nextTurn();
+
+        // redraw
         this.redraw();
     }
 
@@ -205,12 +238,7 @@ export default class MainGameScene extends Scene {
         if (deltaX != 0 || deltaY != 0) {
             let res = this.tryMoveObject(player, player.x + deltaX, player.y + deltaY);
             if (res) {
-                // next turn
-                for (const e of this.getAllObjects())
-                    e.nextTurn();
-
-                // redraw
-                this.redraw();
+                this.nextTurn();
             }
         }
     }
@@ -228,6 +256,17 @@ export default class MainGameScene extends Scene {
         this._drawAssetAt(this.getTopObjectAt(x, y).asset, x, y);
     }
 
+    deleteObject(obj) {
+        const currentLocationObjs = this.getObjectsAt(obj.x, obj.y);
+        if (!currentLocationObjs) return;
+
+        const indexOfObj = currentLocationObjs.findIndex(o => o === obj);
+        if (indexOfObj == -1) return;
+
+        currentLocationObjs.splice(indexOfObj, 1);
+        this.redraw();
+    }
+
     tryMoveObject(obj, dstX, dstY) {
         //check if its legal move? (player should only move one..)
         if (!this.isMovable(dstX, dstY)) {
@@ -235,12 +274,7 @@ export default class MainGameScene extends Scene {
         }
 
         //remvoe from old location
-        if (obj.x > 0 && obj.y > 0) {
-            const currentLocationObjs = this.getObjectsAt(obj.x, obj.y);
-            const indexOfObj = currentLocationObjs.findIndex(o => o === obj);
-            if (indexOfObj > -1)
-                currentLocationObjs.splice(indexOfObj, 1);
-        }
+        this.deleteObject(obj);
 
         //add obj at new location
         obj.x = dstX;
@@ -270,13 +304,18 @@ export default class MainGameScene extends Scene {
         return objs[objs.length - 1];
     }
 
-    _draw() {
+    async _draw() {
         for (let y = 0; y < Game.Height; y++)
             for (let x = 0; x < Game.Width; x++)
                 this._drawFromState(x, y);
 
         this._drawButtons();
 
-        this.graphics.drawText("Level: 1, HP: 10", "14px serif", "white", 0, 0);
+        let info =
+            `Level: ${this._level}`.padEnd(15, ' ') +
+            `HP: ${this._player.health}`.padEnd(15, ' ') +
+            `Gold: ${this._player.gold}`.padEnd(15, ' ');
+
+        await this.graphics.drawText(info, "14px serif", "white", 0, 0);
     }
 }

@@ -21,9 +21,17 @@ export default class GameAudio extends Audio {
     }
 
     play() {
-        this.adjustVolume();
-        super.play();
-        console.log('playing audio', this.src);
+        if (this.isMusic) {
+            this.adjustVolume();
+            super.play();
+            console.log('playing audio', this.src);
+        } else {
+            // if it's not music, we allow sounds to overlap
+            const ga = new GameAudio(this.game, this.src);
+            ga._isMusic = true; // so that it actually plays
+            ga.volume = this.volume;
+            ga.play();
+        }
     }
 
     pause() {

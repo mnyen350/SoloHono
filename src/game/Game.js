@@ -40,6 +40,8 @@ export default class Game {
         }
     }
 
+    get player() { return this._mainScene.player; }
+
     get graphics() { return this._graphics; }
     get assets() { return this._assets; }
     get random() { return this._random; }
@@ -59,7 +61,7 @@ export default class Game {
         Game._instance = this;
 
         this._soundVolume = 1.0;
-        this._musicVolume = 1.0;
+        this._musicVolume = 0.5;
 
         this._graphics = new GameGraphics();
         this._assets = new GameAssets(this);
@@ -70,8 +72,18 @@ export default class Game {
         return this._mainScene.isMovable(x, y, empty);
     }
 
+    deleteObject(obj) {
+        this._mainScene.deleteObject(obj);
+    }
+
     tryMoveObject(obj, dstX, dstY) {
         return this._mainScene.tryMoveObject(obj, dstX, dstY);
+    }
+
+    isAdjacentObjects({ x, y }, { x: x2, y: y2 }) {
+        let dx = Math.abs(x - x2);
+        let dy = Math.abs(y - y2);
+        return (dx <= 1) && (dy <= 1);
     }
 
     async start() {
@@ -119,6 +131,7 @@ export default class Game {
                 await scene.load();
             }
             await scene.draw();
+            //await scene.waitDrawComplete();
 
             // continue
             window.requestAnimationFrame(requestAnimationFrame);

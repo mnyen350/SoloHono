@@ -84,15 +84,15 @@ export default class Scene {
     async unload() {}
     async updateActiveScene(isActive) {}
 
-    _draw() {
+    async _draw() {
         throw new NotImplementedError();
     }
     redraw() { this._needRedraw = true; }
-    draw() {
+    async draw() {
         if (this._needRedraw) {
-            //const start = new Date().getTime();
-            this._draw();
-            //console.log('drawing time: ', new Date().getTime() - start);
+            const start = new Date().getTime();
+            await this._draw();
+            console.log('drawing time: ', new Date().getTime() - start);
             this._needRedraw = false;
         }
     }

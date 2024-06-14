@@ -54,7 +54,8 @@ export default class GameAssets {
         this._sounds = {
             test: new GameAudio(this.game, '/assets/sounds/test.wav'),
             startGame: new GameAudio(this.game, '/assets/sounds/mainmenu.mp3', { loop: true, _isMusic: true }),
-            mainGame: new GameAudio(this.game, '/assets/sounds/gamebgm.mp3', { loop: true, _isMusic: true })
+            mainGame: new GameAudio(this.game, '/assets/sounds/gamebgm.mp3', { loop: true, _isMusic: true }),
+            attack: new GameAudio(this.game, '/assets/sounds/attack.mp3')
         };
 
         console.log('All assets loaded!');

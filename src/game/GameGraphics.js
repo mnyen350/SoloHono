@@ -156,13 +156,14 @@ class GameGraphics {
         });
     }
 
-    texturize(gl, image) {
+    texturize(gl, image, disableCache) {
 
         if (!gl.__textureCache)
             gl.__textureCache = {};
 
         // if image is an Image then turn it into a WebGL Texture
         if ((image instanceof Image) || (image instanceof HTMLCanvasElement)) {
+
             if (image.src && gl.__textureCache && gl.__textureCache[image.src])
                 return gl.__textureCache[image.src];
 
@@ -175,7 +176,7 @@ class GameGraphics {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
             // update the cache with this texture for the given image
-            if (image.src) {
+            if (image.src && !disableCache) {
                 gl.__textureCache[image.src] = texture;
                 console.log('cached texture', image.src);
             }
@@ -183,35 +184,33 @@ class GameGraphics {
             return texture;
         }
 
-        // Possibly already a texture?
-        return image;
+        throw new Error(`texturize called but "image" is not an Image or Canvas`);
     }
 
-    drawText(text, font, fillStyle, x, y) {
+    async drawText(text, font, fillStyle, x, y) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         ctx.font = font;
         const width = ctx.measureText(text).width;
         const height = parseInt(font);
         canvas.width = Math.floor(width);
-        canvas.height = Math.floor(height);
+        canvas.height = Math.floor(height * 1.1);
         ctx.font = font;
         if (fillStyle)
             ctx.fillStyle = fillStyle;
         ctx.fillText(text, 0, height);
-        this.drawCanvas(canvas, x, y, canvas.width, canvas.height);
+        return await this.drawCanvas(canvas, x, y, canvas.width, canvas.height);
     }
 
-    drawCanvas(canvas, dstX, dstY, w, h) {
-        const img = new Image();
-        img.onload = () => this.drawImage(img, dstX, dstY, w, h);
-        img.onerror = function(err) {
-            console.error('Failed to load canvas', err);
-        }
-        img.src = canvas.toDataURL("image/png"); // start the loading
+    async drawCanvas(canvas, dstX, dstY, w, h) {
+        const src = canvas.toDataURL("image/png");
+        const img = await this.loadImage(src);
+
+        // draw image, but do not cache it
+        return this.drawImage(img, dstX, dstY, w, h, true);
     }
 
-    drawImage(image, dstX, dstY, w, h) {
+    drawImage(image, dstX, dstY, w, h, disableCache = false) {
         const m4 = this.m4;
         const gl = this.gl;
         const program = this._program;
@@ -221,7 +220,7 @@ class GameGraphics {
         //
 
         // turn it into a gl texture
-        const tex = this.texturize(gl, image);
+        const tex = this.texturize(gl, image, disableCache);
 
         gl.bindTexture(gl.TEXTURE_2D, tex);
 
