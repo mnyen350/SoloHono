@@ -30,6 +30,7 @@ export default class GameAudio extends Audio {
             const ga = new GameAudio(this.game, this.src);
             ga._isMusic = true; // so that it actually plays
             ga.volume = this.volume;
+            ga.playbackRate = this.playbackRate;
             ga.play();
         }
     }

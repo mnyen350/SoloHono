@@ -1,3 +1,4 @@
 export default {
-    test: "test"
+    crab: "crab",
+    crab2: "crab2"
 }

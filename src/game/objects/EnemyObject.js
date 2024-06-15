@@ -5,17 +5,26 @@ import ObjectType from "./ObjectType";
 export default class EnemyObject extends EntityObject {
 
     _enemyType;
+    _goldRange;
 
     get isMovable() { return false; }
     get enemyType() { return this._enemyType; }
+    get goldRange() { return this._goldRange; }
 
     constructor(game, enemyType) {
 
         const typeMap = {
-            [EnemyType.test]: {
-                health: 10,
-                attackPower: 1,
-                asset: game.assets.images.enemy
+            [EnemyType.crab]: {
+                health: 12,
+                attackRange: [1, 2],
+                goldRange: [1, 3],
+                asset: game.assets.images.enemyCrab
+            },
+            [EnemyType.crab2]: {
+                health: 15,
+                attackRange: [2, 4],
+                goldRange: [3, 10],
+                asset: game.assets.images.enemyCrab2
             }
         };
 
@@ -28,7 +37,8 @@ export default class EnemyObject extends EntityObject {
         this._enemyType = enemyType;
         this._maxHealth = info.health;
         this._health = this._maxHealth;
-        this._attackPower = info.attackPower;
+        this._attackRange = info.attackRange;
+        this._goldRange = info.goldRange;
     }
 
     nextTurn() {

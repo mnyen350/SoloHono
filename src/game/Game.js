@@ -1,6 +1,7 @@
 import GameAssets from "./GameAssets";
 import GameGraphics from "./GameGraphics";
 import Random from "./Random";
+import EndGameScene from "./scenes/EndGameScene";
 import MainGameScene from "./scenes/MainGameScene";
 import StartGameScene from "./scenes/StartGameScene";
 
@@ -16,10 +17,14 @@ export default class Game {
     _random;
     _mainScene;
     _menuScene;
+    _damages;
 
     // settings
     _soundVolume;
     _musicVolume;
+
+    _exited;
+    _removeEvents;
 
     set soundVolume(value) {
         this._soundVolume = value;
@@ -45,6 +50,16 @@ export default class Game {
     get graphics() { return this._graphics; }
     get assets() { return this._assets; }
     get random() { return this._random; }
+    get damages() { return this._damages; }
+    get score() {
+
+        // maybe score should be more than just gold?
+        // enemies killed? idk.
+        if (this._mainScene && this._mainScene._player)
+            return this._mainScene._player.gold;
+
+        return 0;
+    }
 
     get menuScene() { return this._menuScene; }
     set menuScene(value) {
@@ -59,9 +74,12 @@ export default class Game {
 
     constructor() {
         Game._instance = this;
+        window.__GAME__ = this;
 
         this._soundVolume = 1.0;
-        this._musicVolume = 0.5;
+        this._musicVolume = 0.1;
+        this._damages = [];
+        this._exited = false;
 
         this._graphics = new GameGraphics();
         this._assets = new GameAssets(this);
@@ -92,9 +110,9 @@ export default class Game {
             await this.assets.load();
             this.addEvents();
 
-            this._mainScene = new MainGameScene(this);
             this._menuScene = new StartGameScene(this);
-            await this._mainScene.loadLevelDesign(1);
+            //this._menuScene = new EndGameScene(this, true);
+
         } catch (ex) {
             console.log('Failed to start game');
             console.error(ex);
@@ -109,6 +127,18 @@ export default class Game {
         };
 
         let requestAnimationFrame = async(timeStamp) => {
+
+            if (this._exited == 1) {
+                this._exited = 2;
+                return;
+            }
+
+            // new to create the scene
+            if (!this._mainScene) {
+                this._damages = [];
+                this._mainScene = new MainGameScene(this);
+                await this._mainScene.loadLevelDesign(1);
+            }
 
             if (this._menuScene && this._menuScene.isClosed) {
                 this._menuScene.isActive = false;
@@ -131,7 +161,21 @@ export default class Game {
                 await scene.load();
             }
             await scene.draw();
-            //await scene.waitDrawComplete();
+
+            if (!this._menuScene && this.damages.length > 0) {
+                const now = Date.now();
+                const d = this.damages[0];
+
+                if (!d.firstDrawTime) {
+                    d.firstDrawTime = now;
+                    this.assets.sounds.attack.play();
+                }
+
+                if ((now - d.firstDrawTime) >= 1000) {
+                    this.damages.shift(); // remove first
+                    this._mainScene.redraw();
+                }
+            }
 
             // continue
             window.requestAnimationFrame(requestAnimationFrame);
@@ -153,12 +197,54 @@ export default class Game {
             e.preventDefault();
         }
 
+        let selectstart = () => false;
+        let mousedown = (e) => e.preventDefault();
+
         this.graphics.canvas.addEventListener("mousemove", handleMouseMoveEvent);
         this.graphics.canvas.addEventListener("click", handleClickEvent);
         this.graphics.canvas.addEventListener("contextmenu", handleContextMenu);
-        this.graphics.canvas.addEventListener("selectstart", () => false);
-        this.graphics.canvas.addEventListener("mousedown", (e) => e.preventDefault());
+        this.graphics.canvas.addEventListener("selectstart", selectstart);
+        this.graphics.canvas.addEventListener("mousedown", mousedown);
         window.addEventListener("keydown", handleKeyDownEvent);
+
+        this._removeEvents = () => {
+            this.graphics.canvas.removeEventListener("mousemove", handleMouseMoveEvent);
+            this.graphics.canvas.removeEventListener("click", handleClickEvent);
+            this.graphics.canvas.removeEventListener("contextmenu", handleContextMenu);
+            this.graphics.canvas.removeEventListener("selectstart", selectstart);
+            this.graphics.canvas.removeEventListener("mousedown", mousedown);
+            window.removeEventListener("keydown", handleKeyDownEvent);
+        };
+
         window.requestAnimationFrame(requestAnimationFrame);
+    }
+
+    exit() {
+        console.log('exiting');
+
+        this._exited = 1; // start exit seq
+
+        for (const sound of Object.values(this.assets.sounds)) {
+            sound.pause();
+        }
+
+        this.graphics.canvas.classList.remove("pointer");
+        this._removeEvents();
+
+        let clearGraphics = () => {
+            if (this._exited != 2) { // wait for animation frame loop to die
+                setTimeout(clearGraphics, 100);
+                return;
+            }
+
+            const white = this.graphics.createCanvas();
+            const ctx = white.getContext("2d");
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, white.width, white.height);
+            this.graphics.drawCanvas(white, 0, 0, white.width, white.height);
+        }
+
+        clearGraphics();
+        window.__GAME__ = null;
     }
 }

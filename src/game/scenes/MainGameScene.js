@@ -7,6 +7,7 @@ import EnemyObject from "../objects/EnemyObject";
 import EnemyType from "../objects/EnemyType";
 import ObjectType from "../objects/ObjectType";
 import DoorObject from "../objects/DoorObject";
+import GoldPileObject from "../objects/GoldPileObject";
 
 export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y/...)
@@ -17,7 +18,7 @@ export default class MainGameScene extends Scene {
     _levelDesign;
 
     _selectedEnemy;
-    _attackButton;
+    //_attackButton;
 
     get player() { return this._player; }
 
@@ -38,9 +39,9 @@ export default class MainGameScene extends Scene {
 
         this._player = null;
 
-        this._attackButton = this.createButton(100, 100, this.assets.images.attackButton);
-        this._attackButton.isVisible = false;
-        this._attackButton.addEventListener("click", (e) => this.attackButtonClick(e));
+        //this._attackButton = this.createButton(100, 100, this.assets.images.attackButton);
+        //this._attackButton.isVisible = false;
+        //this._attackButton.addEventListener("click", (e) => this.attackButtonClick(e));
     }
 
     async loadLevelDesign(level) {
@@ -74,6 +75,7 @@ export default class MainGameScene extends Scene {
 
         this._spawnPlayer();
         this._spawnEnemies();
+        this._spawnGold();
         this._spawnDoor();
     }
 
@@ -131,12 +133,28 @@ export default class MainGameScene extends Scene {
         this.tryMoveObject(this._player, rx, ry);
     }
 
+    _spawnEnemy(enemy) {
+        const [rx, ry] = this._findAvailableLocation();
+        this._enemies.push(enemy);
+        this.tryMoveObject(enemy, rx, ry);
+    }
+
     _spawnEnemies() {
+        for (let i = 0; i < 10; i++) {
+            const enemy = new EnemyObject(this.game, EnemyType.crab);
+            this._spawnEnemy(enemy);
+        }
+        for (let i = 0; i < 5; i++) {
+            const enemy = new EnemyObject(this.game, EnemyType.crab2);
+            this._spawnEnemy(enemy);
+        }
+    }
+
+    _spawnGold() {
         for (let i = 0; i < 5; i++) {
             const [rx, ry] = this._findAvailableLocation();
-            const enemy = new EnemyObject(this.game, EnemyType.test);
-            this._enemies.push(enemy);
-            this.tryMoveObject(enemy, rx, ry);
+            const gold = new GoldPileObject(this.game, this.game.random.nextInt(3, 10));
+            this.tryMoveObject(gold, rx, ry);
         }
     }
 
@@ -159,7 +177,7 @@ export default class MainGameScene extends Scene {
         if (this._selectedEnemy.isDead) return;
         if (!this.game.isAdjacentObjects(this._player, this._selectedEnemy)) return;
 
-        console.log('attack button clicked');
+        //console.log('attack button clicked');
         console.log('attacking', this._selectedEnemy);
 
         this._player.attack(this._selectedEnemy);
@@ -188,15 +206,17 @@ export default class MainGameScene extends Scene {
     }
 
     handleContextMenu(e) {
-        this._attackButton.isVisible = false;
-        this.redraw();
+        //this._attackButton.isVisible = false;
+        //this.redraw();
     }
 
     handleClickEvent(e) {
         super.handleClickEvent(e);
 
-        this._selectedEnemy = null;
-        this._attackButton.isVisible = false;
+        if (this.game.damages.length > 0) return; // block input
+
+        //this._selectedEnemy = null;
+        //this._attackButton.isVisible = false;
 
         // only if a button wasn't clicked
         if (!this._buttons.find(b => b.isVisible && b.isOverlap(e.offsetX, e.offsetY))) {
@@ -209,10 +229,14 @@ export default class MainGameScene extends Scene {
 
                     if (this.game.isAdjacentObjects(this._player, obj)) {
                         this._selectedEnemy = obj;
-                        this._attackButton.isVisible = true;
-                        this.redraw();
 
-                        console.log('enemy selected', obj);
+                        // changed to just make clicking on the enemy attack them instead of a menu..
+                        // maybe if there was more time would implement more?
+                        this.attackButtonClick(e);
+
+                        //this._attackButton.isVisible = true;
+                        //this.redraw();
+                        //console.log('enemy selected', obj);
                     }
 
                 } else if (obj.objectType == ObjectType.player) {
@@ -221,8 +245,7 @@ export default class MainGameScene extends Scene {
             }
         }
 
-
-        this.redraw();
+        // this.redraw();
     }
 
     nextTurn() {
@@ -235,6 +258,8 @@ export default class MainGameScene extends Scene {
     }
 
     async handleMovePlayer(key) {
+        if (this.game.damages.length > 0) return; // block input
+
         const player = this._player;
         let deltaX = 0;
         let deltaY = 0;
@@ -247,12 +272,22 @@ export default class MainGameScene extends Scene {
         if (deltaX != 0 || deltaY != 0) {
             let res = this.tryMoveObject(player, player.x + deltaX, player.y + deltaY);
             if (res) {
+
+                // maybe objects should implemenet a "step on" event?
+
                 const objs = this.getObjectsAt(player.x, player.y);
                 const door = objs.find(o => o.objectType == ObjectType.door);
                 if (!door) {
+
+                    // pickup gold
+                    const gold = objs.find(o => o.objectType == ObjectType.goldpile);
+                    if (gold) {
+                        this._player.pickupGold(gold.goldAmount);
+                        this.deleteObject(gold);
+                    }
+
                     this.nextTurn();
                 } else { // stepped onto door, advance to next level
-
                     if (this._level == 3) {
                         console.log('game completed.');
                     } else {
@@ -274,7 +309,15 @@ export default class MainGameScene extends Scene {
     }
 
     _drawFromState(x, y) {
-        this._drawAssetAt(this.getTopObjectAt(x, y).asset, x, y);
+        const objs = this.getObjectsAt(x, y);
+        if (!objs || objs.length == 0) return;
+
+        // we draw the terrain because if there is an entity sprite, it may have transparency
+        const bottom = objs[0];
+        const top = objs[objs.length - 1];
+        if (bottom != top)
+            this._drawAssetAt(bottom.asset, x, y); // terrain
+        this._drawAssetAt(top.asset, x, y);
     }
 
     deleteObject(obj) {
@@ -329,6 +372,11 @@ export default class MainGameScene extends Scene {
         for (let y = 0; y < Game.Height; y++)
             for (let x = 0; x < Game.Width; x++)
                 this._drawFromState(x, y);
+
+        if (this.game.damages.length > 0) {
+            const d = this.game.damages[0];
+            this._drawAssetAt(d.asset, d.x, d.y);
+        }
 
         this._drawButtons();
 
