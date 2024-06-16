@@ -51,6 +51,7 @@ export default class Game {
     get assets() { return this._assets; }
     get random() { return this._random; }
     get damages() { return this._damages; }
+    get level() { return this._mainScene.level; }
     get score() {
 
         // maybe score should be more than just gold?
@@ -96,6 +97,11 @@ export default class Game {
 
     tryMoveObject(obj, dstX, dstY) {
         return this._mainScene.tryMoveObject(obj, dstX, dstY);
+    }
+
+    async loadLevel(level) {
+        await this._mainScene.loadLevelDesign(level);
+        this._mainScene.redraw();
     }
 
     isAdjacentObjects({ x, y }, { x: x2, y: y2 }) {

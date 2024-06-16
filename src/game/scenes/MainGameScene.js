@@ -8,6 +8,7 @@ import EnemyType from "../objects/EnemyType";
 import ObjectType from "../objects/ObjectType";
 import DoorObject from "../objects/DoorObject";
 import GoldPileObject from "../objects/GoldPileObject";
+import EndGameScene from "./EndGameScene";
 
 export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y/...)
@@ -20,6 +21,7 @@ export default class MainGameScene extends Scene {
     _selectedEnemy;
     //_attackButton;
 
+    get level() { return this._level; }
     get player() { return this._player; }
 
     get isActive() { return super.isActive; }
@@ -86,7 +88,7 @@ export default class MainGameScene extends Scene {
     async unload() {}
 
 
-    isMovable(x, y, empty) {
+    isMovable(x, y, empty = false, floor = false) {
         if (x < 0 || y < 0)
             return false;
         else if (x >= Game.Width || y >= Game.Height)
@@ -101,7 +103,8 @@ export default class MainGameScene extends Scene {
             return false;
         else if (destinationObjs.find(o => !o.isMovable)) // check if any of the destinationObjs are not isMovable
             return false;
-
+        else if (floor && !destinationObjs.find(o => o.asset == this.game.assets.images.floor)) // only find floor tiles
+            return false;
 
         return true;
     }
@@ -113,7 +116,7 @@ export default class MainGameScene extends Scene {
             const ry = this.random.nextInt(0, Game.Height);
 
             //console.log('findAvailableLocation', [rx, ry]);
-            if (this.isMovable(rx, ry, true))
+            if (this.isMovable(rx, ry, true, true))
                 return [rx, ry];
         }
         throw new Error(`Unable to find available location within ${LIMIT} tries`);
@@ -272,29 +275,13 @@ export default class MainGameScene extends Scene {
         if (deltaX != 0 || deltaY != 0) {
             let res = this.tryMoveObject(player, player.x + deltaX, player.y + deltaY);
             if (res) {
-
-                // maybe objects should implemenet a "step on" event?
-
+                // trigger step on event for objects at location
                 const objs = this.getObjectsAt(player.x, player.y);
-                const door = objs.find(o => o.objectType == ObjectType.door);
-                if (!door) {
-
-                    // pickup gold
-                    const gold = objs.find(o => o.objectType == ObjectType.goldpile);
-                    if (gold) {
-                        this._player.pickupGold(gold.goldAmount);
-                        this.deleteObject(gold);
-                    }
-
-                    this.nextTurn();
-                } else { // stepped onto door, advance to next level
-                    if (this._level == 3) {
-                        console.log('game completed.');
-                    } else {
-                        await this.loadLevelDesign(this._level + 1);
-                        this.redraw();
-                    }
+                for (const o of objs.filter(o => o.objectType != ObjectType.player)) {
+                    await o.stepOn(player);
                 }
+                // trigger next turn for enemies
+                this.nextTurn();
             }
         }
     }

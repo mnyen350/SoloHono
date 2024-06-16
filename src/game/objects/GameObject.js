@@ -32,6 +32,10 @@ export default class GameObject {
         this._objectType = objectType;
     }
 
+    stepOn(obj) {
+
+    }
+
     nextTurn() {
 
     }

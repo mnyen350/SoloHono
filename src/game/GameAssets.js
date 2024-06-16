@@ -30,6 +30,8 @@ export default class GameAssets {
             enemyCrab2: await graphics.loadImage('/assets/enemycrab2.png'),
             door: await graphics.loadImage('/assets/door.png'),
             goldpile: await graphics.loadImage('/assets/goldpile.png'),
+            potionattack: await graphics.loadImage('/assets/potionattack.png'),
+            potionhealth: await graphics.loadImage('/assets/potionhealth.png'),
 
             damage: {
                 0: await graphics.loadImage('/assets/damage/0.png'),

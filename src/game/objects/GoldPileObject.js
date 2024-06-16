@@ -11,4 +11,10 @@ export default class GoldPileObject extends GameObject {
         super(game, game.assets.images.goldpile, ObjectType.goldpile);
         this._goldAmount = amount;
     }
+
+    stepOn(obj) {
+        if (obj.objectType != ObjectType.player) return;
+        obj.pickupGold(this.goldAmount);
+        this.game.deleteObject(this);
+    }
 }
