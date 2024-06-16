@@ -3,18 +3,28 @@ import { Game } from "./game";
 import { useEffect } from "react";
 
 function App() {
-  function startGame() {
-    if (window.__GAME__) return;
-    const game = new Game();
-    game.start();
+  function startGame(e) {
+    //console.log(e);
+    if (Game.Instance) {
+      const game = Game.Instance;
+      game.exit();
+      e.target.innerHTML = "Start";
+    }
+    else {
+      const game = new Game();
+      game.start();
+      e.target.innerHTML = "Stop";
+    }
   }
 
   return (
     <div className="App">
-      <button onClick={startGame}>Start Game</button>
-      <br></br>
-      <canvas id="myCanvas" style={{ "border": "1px solid black" }}>
-      </canvas>
+      <div>
+        <button onClick={startGame} style={{ "marginBottom": "10px" }}>Start</button>
+        <br></br>
+        <canvas id="myCanvas">
+        </canvas>
+      </div>
     </div>
   );
 }

@@ -13,13 +13,14 @@ export default class EntityObject extends GameObject {
     get health() { return this._health; }
     set health(value) { this._health = Math.max(0, Math.min(value, this.maxHealth)); }
     get maxHealth() { return this._maxHealth; }
+    set maxHealth(value) { this._maxHealth = value; }
+    get isDead() { return this.health <= 0; }
 
+    get attackRange() { return this._attackRange; }
     get attackPower() {
         const [min, max] = this._attackRange;
         return this.game.random.nextInt(min, max + 1);
     }
-
-    get isDead() { return this.health <= 0; }
 
     constructor(game, asset, objectType) {
         super(game, asset, objectType);

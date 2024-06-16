@@ -14,7 +14,7 @@ export default class PlayerObject extends EntityObject {
         this._gold = 0;
 
         // TO-DO: assign based on race? maybe not enough time to implement races..
-        this._maxHealth = 150;
+        this._maxHealth = 50;
         this._health = this._maxHealth;
         this._attackRange = [2, 5];
 

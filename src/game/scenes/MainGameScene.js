@@ -9,6 +9,7 @@ import ObjectType from "../objects/ObjectType";
 import DoorObject from "../objects/DoorObject";
 import GoldPileObject from "../objects/GoldPileObject";
 import EndGameScene from "./EndGameScene";
+import PotionObject from "../objects/PotionObject";
 
 export default class MainGameScene extends Scene {
     _state; // [y][x] -> a list of GameObject(asset/x/y/...)
@@ -78,6 +79,7 @@ export default class MainGameScene extends Scene {
         this._spawnPlayer();
         this._spawnEnemies();
         this._spawnGold();
+        this._spawnItems();
         this._spawnDoor();
     }
 
@@ -158,6 +160,14 @@ export default class MainGameScene extends Scene {
             const [rx, ry] = this._findAvailableLocation();
             const gold = new GoldPileObject(this.game, this.game.random.nextInt(3, 10));
             this.tryMoveObject(gold, rx, ry);
+        }
+    }
+
+    _spawnItems() {
+        for (let i = 0; i < 5; i++) {
+            const [rx, ry] = this._findAvailableLocation();
+            const item = new PotionObject(this.game);
+            this.tryMoveObject(item, rx, ry);
         }
     }
 
@@ -370,7 +380,8 @@ export default class MainGameScene extends Scene {
         let info =
             `Level: ${this._level}`.padEnd(15, ' ') +
             `HP: ${this._player.health}`.padEnd(15, ' ') +
-            `Gold: ${this._player.gold}`.padEnd(15, ' ');
+            `Gold: ${this._player.gold}`.padEnd(15, ' ') +
+            `Attack: ${this._player.attackRange[0]}~${this._player.attackRange[1]}`.padEnd(15, ' ');
 
         await this.graphics.drawText(info, "14px serif", "white", 0, 0);
     }

@@ -3,5 +3,6 @@ export default {
     "terrain": "terrain",
     "player": "player",
     "door": "door",
-    "goldpile": "goldpile"
+    "goldpile": "goldpile",
+    "potion": "potion"
 }

@@ -251,6 +251,10 @@ export default class Game {
         }
 
         clearGraphics();
-        window.__GAME__ = null;
+
+        if (Game._instance == this)
+            Game._instance = null;
+        if (window.__GAME__ == this)
+            window.__GAME__ = null;
     }
 }
