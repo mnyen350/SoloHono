@@ -8,19 +8,19 @@ function App() {
     if (Game.Instance) {
       const game = Game.Instance;
       game.exit();
-      e.target.innerHTML = "Start";
+      //e.target.innerHTML = "Start";
     }
     else {
       const game = new Game();
       game.start();
-      e.target.innerHTML = "Stop";
+      //e.target.innerHTML = "Stop";
     }
   }
 
   return (
     <div className="App">
       <div>
-        <button onClick={startGame} style={{ "marginBottom": "10px" }}>Start</button>
+        <button onClick={startGame} style={{ "marginBottom": "10px" }}>Start / Stop</button>
         <br></br>
         <canvas id="myCanvas">
         </canvas>
